@@ -9,6 +9,7 @@ dbfile = os.path.join(os.path.dirname(__file__), "data.db")
 def create_record(original_url: str) -> str:
     """
     Create a new shorten URL record in the database
+
     :param original_url: The original URL to shorten
     :return: Shortened key
     """
@@ -35,6 +36,7 @@ def create_record(original_url: str) -> str:
 def delete_record(url: str) -> bool:
     """
     Delete the record from the database
+
     :param url: The URL to delete, see app.py (/api/v1/delete_record) for the detailed accepted types
     :return: True if the record is deleted, False otherwise
     """
@@ -91,6 +93,7 @@ def search(
 ) -> str | None:
     """
     Search for the linked short -> orig or orig -> short URL or verify if the URL exists
+
     :param url: The URL to search/verify
     :param query_type: The type of URL to search from
     :param response_type: The type of URL to return
@@ -114,6 +117,7 @@ def delete(
 ):
     """
     Delete the record from the database
+
     :param con: The connection to the database
     :param unused_short_word:
     :return:
@@ -127,6 +131,7 @@ def delete(
 def get_all_records() -> dict[str, str]:
     """
     Get all records from the database
+
     :return: A dictionary of all records
     """
     with sqlite3.connect(dbfile) as con:

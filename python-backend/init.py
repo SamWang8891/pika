@@ -6,6 +6,7 @@ from typing import Callable
 def load_dictionary(commit: Callable, cur: Cursor, text_file: str):
     """
     Load the dictionary from a text file into the database.
+
     :param commit: Callable to commit the transaction
     :param cur: Cursor of the database
     :param text_file: Path to the text file containing the dictionary
@@ -33,6 +34,7 @@ def load_dictionary(commit: Callable, cur: Cursor, text_file: str):
 def make_urls(commit: Callable, cur: Cursor):
     """
     Create the table to store the URLs.
+
     :param commit: Callable to commit the transaction
     :param cur: Cursor of the database
     """
@@ -50,6 +52,7 @@ def make_urls(commit: Callable, cur: Cursor):
 def make_login(commit: Callable, cur: Cursor):
     """
     Create the table to store the login credentials.
+
     :param commit: Callable to commit the transaction
     :param cur: Cursor of the database
     """
@@ -72,6 +75,7 @@ def make_login(commit: Callable, cur: Cursor):
 def sort_dict(text_file: str):
     """
     Sort the words in a text file alphabetically.
+
     :param text_file: The path to the text file containing the dictionary
     """
     # Read the contents of the file
