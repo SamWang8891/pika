@@ -2,6 +2,7 @@ import re
 from sqlite3 import Cursor
 from typing import Callable
 
+forbidden: set[str] = {'login', 'admin', 'logout', 'api', 'index', 'index.html', 'change_pass', ''}
 
 def load_dictionary(commit: Callable, cur: Cursor, text_file: str):
     """
@@ -104,7 +105,6 @@ def del_forbidden_word(textfile: str):
     :return: None
     """
 
-    forbidden: set[str] = {'login', 'admin', 'logout', 'api', 'index', 'index.html', 'change_pass', ''}
     legal: bool = True
 
     words = set()

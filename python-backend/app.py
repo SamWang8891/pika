@@ -38,10 +38,10 @@ BEARER_TOKEN = os.getenv('BEARER_TOKEN')
 app = FastAPI(
     title="Simple URL Shortener Backend",
     description="Backend for Simple URL Shortener service.",
-    version="1.1",
+    version="2.0",
     openapi_url="/openapi.json",
     docs_url="/docs",
-    root_path="/api/v1",
+    root_path="/api/v2",
 )
 
 app.add_middleware(
@@ -194,14 +194,23 @@ async def change_pass_route(
 )
 async def create_record_route(
         url: str = Form(..., description="URL to shorten", examples=[""]),
+        custom_keyword: str = Form(..., description="Custom keyword", examples=[""])
 ):
-    return JSONResponse({
-        "status": True,
-        "message": "Record created!",
-        "data": {
-            "shortened_key": create_record(url)
-        },
-    })
+    success, keyword, message = create_record(url, custom_keyword)
+    if not success:
+        return JSONResponse({
+            "status": False,
+            "message": message,
+            "data": None,
+        })
+    else:
+        return JSONResponse({
+            "status": True,
+            "message": message,
+            "data": {
+                "shortened_key": create_record(url)
+            },
+        })
 
 
 @app.delete(

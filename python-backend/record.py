@@ -2,35 +2,69 @@ import os
 import sqlite3
 from enum import StrEnum
 from sqlite3 import Connection
+from .init import forbidden
+import re
 
 dbfile = os.path.join(os.path.dirname(__file__), "data.db")
 
 
-def create_record(original_url: str) -> str:
+def create_record(original_url: str, custom_keyword:str = "") -> tuple[bool, str, str]:
     """
     Create a new shorten URL record in the database
 
     :param original_url: The original URL to shorten
-    :return: Shortened key
+    :param custom_keyword: The custom keyword to use, empty for random from the database
+    :return: A tuple. The first element (bool) indicates success or failure. The second element (str) is the shortened keyword. The third element (str) is a message.
     """
+
     if not original_url.startswith(('https://', 'http://')):
         original_url = 'https://' + original_url
 
     with sqlite3.connect(dbfile) as con:
         cur = con.cursor()
 
-        cur.execute("SELECT short FROM urls WHERE orig = ?", (original_url,))
-        result = cur.fetchone()
-        if result and (existing_short_key := result[0]):
-            return existing_short_key
+        custom_keyword.strip()
 
-        cur.execute("SELECT word FROM dict WHERE used = 0 ORDER BY RANDOM() LIMIT 1")
-        shortened_key = cur.fetchone()[0]
+        # If user are creating the record with self-define keyword,
+        # check if the keyword is used, if not then create it.
+        # Ignore if there is an existing record with different shortened keyword
 
-        cur.execute("UPDATE dict SET used = 1 WHERE word = ?", (shortened_key,))
-        cur.execute("INSERT INTO urls (orig, short) VALUES (?, ?)", (original_url, shortened_key))
-        con.commit()
-        return shortened_key
+        # If user give a custom keyword
+        if(custom_keyword != ""):
+            # Check if the keyword is illegal
+            if (custom_keyword in forbidden) or (re.match(r"^[A-Za-z0-9]*$", custom_keyword) is None):
+                return False, "", "Keyword is illegal!"
+
+            # Check if the keyword is occupied
+            cur.execute("SELECT short FROM urls WHERE short = ?", (custom_keyword,))
+            result = cur.fetchone()
+            if result:
+                return False, "", "Keyword is occupied!"
+
+            # Check if the keywork is within the dictionary
+            cur.execute("SELECT word FROM dict WHERE word = ?", (custom_keyword,))
+            result = cur.fetchone()
+            if result:
+                cur.execute("UPDATE dict SET used = 1 WHERE word = ?", (custom_keyword,))
+
+            # Create a record with that keyword
+            cur.execute("INSERT INTO urls (orig, short) VALUES (?, ?)", (original_url, custom_keyword))
+
+            return True, custom_keyword, "Custom record created!"
+        else:
+            # Check if the original URL is already in the database
+            cur.execute("SELECT short FROM urls WHERE orig = ?", (original_url,))
+            result = cur.fetchone()
+            if result and (existing_short_key := result[0]):
+                return True, existing_short_key, "Existing record found!"
+
+            cur.execute("SELECT word FROM dict WHERE used = 0 ORDER BY RANDOM() LIMIT 1")
+            shortened_key = cur.fetchone()[0]
+
+            cur.execute("UPDATE dict SET used = 1 WHERE word = ?", (shortened_key,))
+            cur.execute("INSERT INTO urls (orig, short) VALUES (?, ?)", (original_url, shortened_key))
+            con.commit()
+            return True, shortened_key, "Record created!"
 
 
 def delete_record(url: str) -> bool:
@@ -124,7 +158,10 @@ def delete(
     """
     cur = con.cursor()
     cur.execute(f"DELETE FROM urls WHERE short = ?", (unused_short_word,))
-    cur.execute("UPDATE dict SET used = 0 WHERE word = ?", (unused_short_word,))
+    try:
+        cur.execute("UPDATE dict SET used = 0 WHERE word = ?", (unused_short_word,)) # If the word is a custom word, this line might fail, but it's okay
+    except:
+        pass
     con.commit()
 
 
