@@ -33,8 +33,8 @@ web-frontend/*.iml
 __pycache__
 .env
 *.db
-web-frontend/conf.yaml
-python-backend/dictionary.txt
+frontend/conf.yaml
+backend/dictionary.txt
 docker/backend/
 docker/web/
 package-lock.json
@@ -44,5 +44,5 @@ token.txt
 to-do.txt
 .venv
 *-debug.*
-python-backend/.env
-python-backend/is_running.txt
+backend/.env
+backend/is_running.txt
