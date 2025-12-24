@@ -2,7 +2,7 @@ import os
 import sqlite3
 from enum import StrEnum
 from sqlite3 import Connection
-from .init import forbidden
+from init import forbidden
 import re
 
 dbfile = os.path.join(os.path.dirname(__file__), "data.db")
