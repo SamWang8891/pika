@@ -42,3 +42,8 @@ to-do.txt
 .venv
 *-debug.*
 
+# Editor files
+*.imi
+python-backend/*.iml
+web-frontend/*.iml
+
