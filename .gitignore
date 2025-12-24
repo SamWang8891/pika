@@ -25,6 +25,9 @@ node_modules
 *.njsproj
 *.sln
 *.sw?
+*.imi
+python-backend/*.iml
+web-frontend/*.iml
 
 # User generated
 __pycache__
@@ -41,9 +44,5 @@ token.txt
 to-do.txt
 .venv
 *-debug.*
-
-# Editor files
-*.imi
-python-backend/*.iml
-web-frontend/*.iml
-
+python-backend/.env
+python-backend/is_running.txt
