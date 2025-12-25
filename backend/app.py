@@ -87,8 +87,7 @@ class SessionData(BaseModel):
     tags=["Status"],
 )
 def status_route():
-    return JSONResponse({
-        "status": HTTPStatus.OK,
+    return JSONResponse(status_code=HTTPStatus.OK, content={
         "message": "It's alive!",
         "data": None,
     })
@@ -103,8 +102,7 @@ def status_route():
 )
 def logout_route(request: Request):
     request.session.pop("user", None)
-    return JSONResponse({
-        "status": HTTPStatus.OK,
+    return JSONResponse(status_code=HTTPStatus.OK, content={
         "message": "Successfully logged out!",
         "data": None,
     })
@@ -120,15 +118,13 @@ def logout_route(request: Request):
 async def login_route(request: Request, username: str = Form(...), password: str = Form(...)):
     if not is_permitted(username, password):
         request.session.pop("user", None)
-        return JSONResponse({
-            "status": HTTPStatus.UNAUTHORIZED,
+        return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={
             "message": "Unauthorized, wrong username or password.",
             "data": None,
         })
 
     request.session["user"] = SessionData(permitted=True).model_dump()
-    return JSONResponse({
-        "status": HTTPStatus.OK,
+    return JSONResponse(status_code=HTTPStatus.OK, content={
         "message": "Successfully logged in!",
         "data": None,
     })
@@ -145,14 +141,12 @@ async def check_user_route(request: Request):
     session_data = request.session.get("user", {"permitted": False})
 
     if not session_data.get("permitted"):
-        return JSONResponse({
-            "status": HTTPStatus.UNAUTHORIZED,
+        return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={
             "message": "Unauthorized",
             "data": None,
         })
 
-    return JSONResponse({
-        "status": HTTPStatus.OK,
+    return JSONResponse(status_code=HTTPStatus.OK, content={
         "message": "User permitted!",
         "data": None,
     })
@@ -173,15 +167,13 @@ async def change_pass_route(
     session_data = request.session.get("user", {"permitted": False})
 
     if not (bypass or session_data.get("permitted")):
-        return JSONResponse({
-            "status": HTTPStatus.UNAUTHORIZED,
+        return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={
             "message": "Unauthorized",
             "data": None,
         })
 
     change_cred(new_pass)
-    return JSONResponse({
-        "status": HTTPStatus.OK,
+    return JSONResponse(status_code=HTTPStatus.OK, content={
         "message": "Password changed successfully!",
         "data": None,
     })
@@ -199,8 +191,7 @@ async def create_record_route(
         custom_keyword: str = Form(..., description="Custom keyword", examples=[""])
 ):
     status, keyword, message = create_record(url, custom_keyword)
-    return JSONResponse({
-        "status": status,
+    return JSONResponse(status_code=status, content={
         "message": message,
         "data": {
             "shortened_key": keyword
@@ -236,8 +227,7 @@ async def delete_record_route(
         })
 
     status, message = delete_record(url)
-    return JSONResponse({
-        "status": status,
+    return JSONResponse(status_code=status, content={
         "message": message,
         "data": None,
     })
@@ -254,8 +244,7 @@ async def search_record_route(
         short_key: str = Query(..., description="Short key to search", examples=[""]),
 ):
     status, message, result = search(short_key, query_type=UrlRowType.SHORT, response_type=UrlRowType.ORIG)
-    return JSONResponse({
-        "status": status,
+    return JSONResponse(status_code=status, content={
         "message": message,
         "data": {
             "original_url": result
@@ -276,15 +265,13 @@ def get_all_records_route(
 ):
     session_data = request.session.get("user", {"permitted": False})
     if not (bypass or session_data.get("permitted")):
-        return JSONResponse({
-            "status": HTTPStatus.UNAUTHORIZED,
+        return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={
             "message": "Unauthorized",
             "data": None,
         })
 
     status, message, records = get_all_records()
-    return JSONResponse({
-        "status": status,
+    return JSONResponse(status_code=status, content={
         "message": message,
         "data": {
             "records": records
@@ -305,15 +292,13 @@ def delete_all_records_route(
 ):
     session_data = request.session.get("user", {"permitted": False})
     if not (bypass or session_data.get("permitted")):
-        return JSONResponse({
-            "status": HTTPStatus.UNAUTHORIZED,
+        return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={
             "message": "Unauthorized",
             "data": None,
         })
 
     delete_all_records()
-    return JSONResponse({
-        "status": HTTPStatus.OK,
+    return JSONResponse(status_code=HTTPStatus.OK, content={
         "message": "All records deleted!",
         "data": None,
     })
