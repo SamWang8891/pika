@@ -26,8 +26,8 @@ node_modules
 *.sln
 *.sw?
 *.imi
-python-backend/*.iml
-web-frontend/*.iml
+backend/*.iml
+frontend/*.iml
 
 # User generated
 __pycache__
@@ -35,6 +35,8 @@ __pycache__
 *.db
 frontend/conf.yaml
 backend/dictionary.txt
+backend/is_reset_password.txt
+backend/.env
 docker/backend/
 docker/web/
 token.txt
@@ -43,5 +45,6 @@ token.txt
 to-do.txt
 .venv
 *-debug.*
-backend/.env
 backend/is_running.txt
+backend/.python-version
+frontend/.vite/
