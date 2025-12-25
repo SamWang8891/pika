@@ -37,7 +37,6 @@ frontend/conf.yaml
 backend/dictionary.txt
 docker/backend/
 docker/web/
-package-lock.json
 token.txt
 
 # Dev
