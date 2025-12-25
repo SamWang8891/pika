@@ -25,20 +25,23 @@ node_modules
 *.njsproj
 *.sln
 *.sw?
+*.imi
+python-backend/*.iml
+web-frontend/*.iml
 
 # User generated
 __pycache__
 .env
 *.db
-web-frontend/conf.yaml
-python-backend/dictionary.txt
+frontend/conf.yaml
+backend/dictionary.txt
 docker/backend/
 docker/web/
-package-lock.json
 token.txt
 
 # Dev
 to-do.txt
 .venv
 *-debug.*
-
+backend/.env
+backend/is_running.txt

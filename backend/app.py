@@ -1,6 +1,7 @@
 import inspect
 import os
 import sqlite3
+from http import HTTPStatus
 
 import uvicorn
 from dotenv import load_dotenv
@@ -9,11 +10,11 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
-from starlette.responses import RedirectResponse, JSONResponse
+from starlette.responses import JSONResponse
 
 from cred import is_permitted, change_cred
 from init import del_forbidden_word, sort_dict, load_dictionary, make_urls, make_login
-from record import create_record, purge_all_records, delete_record, get_all_records, search, UrlRowType
+from record import create_record, delete_all_records, delete_record, get_all_records, search, UrlRowType
 from schemas import StatusResponse, ShortenedResponse, SearchResponse, GetRecordsResponse
 
 # -------------------------------
@@ -38,10 +39,10 @@ BEARER_TOKEN = os.getenv('BEARER_TOKEN')
 app = FastAPI(
     title="Simple URL Shortener Backend",
     description="Backend for Simple URL Shortener service.",
-    version="1.1",
+    version="2.0",
     openapi_url="/openapi.json",
     docs_url="/docs",
-    root_path="/api/v1",
+    root_path="/api/v2",
 )
 
 app.add_middleware(
@@ -54,8 +55,9 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=origins if origins else ["*"],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "DELETE"],
+    allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 bearer_scheme = HTTPBearer(auto_error=False)
@@ -85,8 +87,7 @@ class SessionData(BaseModel):
     tags=["Status"],
 )
 def status_route():
-    return JSONResponse({
-        "status": True,
+    return JSONResponse(status_code=HTTPStatus.OK, content={
         "message": "It's alive!",
         "data": None,
     })
@@ -101,9 +102,8 @@ def status_route():
 )
 def logout_route(request: Request):
     request.session.pop("user", None)
-    return JSONResponse({
-        "status": True,
-        "message": "Logged out!",
+    return JSONResponse(status_code=HTTPStatus.OK, content={
+        "message": "Successfully logged out!",
         "data": None,
     })
 
@@ -118,16 +118,14 @@ def logout_route(request: Request):
 async def login_route(request: Request, username: str = Form(...), password: str = Form(...)):
     if not is_permitted(username, password):
         request.session.pop("user", None)
-        return JSONResponse({
-            "status": False,
-            "message": "Invalid credentials!",
+        return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={
+            "message": "Unauthorized, wrong username or password.",
             "data": None,
         })
 
     request.session["user"] = SessionData(permitted=True).model_dump()
-    return JSONResponse({
-        "status": True,
-        "message": "Logged in!",
+    return JSONResponse(status_code=HTTPStatus.OK, content={
+        "message": "Successfully logged in!",
         "data": None,
     })
 
@@ -143,14 +141,12 @@ async def check_user_route(request: Request):
     session_data = request.session.get("user", {"permitted": False})
 
     if not session_data.get("permitted"):
-        return JSONResponse({
-            "status": False,
-            "message": "Log in first!",
+        return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={
+            "message": "Unauthorized",
             "data": None,
         })
 
-    return JSONResponse({
-        "status": True,
+    return JSONResponse(status_code=HTTPStatus.OK, content={
         "message": "User permitted!",
         "data": None,
     })
@@ -171,16 +167,14 @@ async def change_pass_route(
     session_data = request.session.get("user", {"permitted": False})
 
     if not (bypass or session_data.get("permitted")):
-        return JSONResponse({
-            "status": False,
-            "message": "Login first!",
+        return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={
+            "message": "Unauthorized",
             "data": None,
         })
 
     change_cred(new_pass)
-    return JSONResponse({
-        "status": True,
-        "message": "Password changed!",
+    return JSONResponse(status_code=HTTPStatus.OK, content={
+        "message": "Password changed successfully!",
         "data": None,
     })
 
@@ -194,13 +188,14 @@ async def change_pass_route(
 )
 async def create_record_route(
         url: str = Form(..., description="URL to shorten", examples=[""]),
+        custom_keyword: str = Form(..., description="Custom keyword", examples=[""])
 ):
-    return JSONResponse({
-        "status": True,
-        "message": "Record created!",
+    status, keyword, message = create_record(url, custom_keyword)
+    return JSONResponse(status_code=status, content={
+        "message": message,
         "data": {
-            "shortened_key": create_record(url)
-        },
+            "shortened_key": keyword
+        }
     })
 
 
@@ -226,21 +221,14 @@ async def delete_record_route(
     session_data = request.session.get("user", {"permitted": False})
     if not (bypass or session_data.get("permitted")):
         return JSONResponse({
-            "status": False,
-            "message": "Please login first!",
+            "status": HTTPStatus.UNAUTHORIZED,
+            "message": "Unauthorized",
             "data": None,
         })
 
-    if not delete_record(url):
-        return JSONResponse({
-            "status": False,
-            "message": "No matching record!",
-            "data": None,
-        })
-
-    return JSONResponse({
-        "status": True,
-        "message": "Success!",
+    status, message = delete_record(url)
+    return JSONResponse(status_code=status, content={
+        "message": message,
         "data": None,
     })
 
@@ -255,19 +243,11 @@ async def delete_record_route(
 async def search_record_route(
         short_key: str = Query(..., description="Short key to search", examples=[""]),
 ):
-    output = search(short_key, query_type=UrlRowType.SHORT, response_type=UrlRowType.ORIG)
-    if output == "404":
-        return JSONResponse({
-            "status": False,
-            "message": "No matching record!",
-            "data": None,
-        })
-
-    return JSONResponse({
-        "status": True,
-        "message": "Success!",
+    status, message, result = search(short_key, query_type=UrlRowType.SHORT, response_type=UrlRowType.ORIG)
+    return JSONResponse(status_code=status, content={
+        "message": message,
         "data": {
-            "original_url": output
+            "original_url": result
         },
     })
 
@@ -285,39 +265,40 @@ def get_all_records_route(
 ):
     session_data = request.session.get("user", {"permitted": False})
     if not (bypass or session_data.get("permitted")):
-        return JSONResponse({
-            "status": False,
-            "message": "Log in first!",
+        return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={
+            "message": "Unauthorized",
             "data": None,
         })
 
-    return JSONResponse({
-        "status": True,
-        "message": "Success!",
+    status, message, records = get_all_records()
+    return JSONResponse(status_code=status, content={
+        "message": message,
         "data": {
-            "records": get_all_records()
+            "records": records
         },
     })
 
 
 @app.delete(
-    "/purge_all_records",
+    "/delete_all_records",
     response_model=StatusResponse,
     summary="Purge all records",
     description="Purge all records from the database.",
     tags=["Record"],
 )
-def purge_all_records_route(
+def delete_all_records_route(
         request: Request,
         bypass: bool = Depends(verify_bearer_token)
 ):
     session_data = request.session.get("user", {"permitted": False})
     if not (bypass or session_data.get("permitted")):
-        return RedirectResponse(url="/login/", status_code=302)
+        return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={
+            "message": "Unauthorized",
+            "data": None,
+        })
 
-    purge_all_records()
-    return JSONResponse({
-        "status": True,
+    delete_all_records()
+    return JSONResponse(status_code=HTTPStatus.OK, content={
         "message": "All records deleted!",
         "data": None,
     })

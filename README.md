@@ -187,7 +187,7 @@ notice.
 
 #### Backend 👨‍🔧
 
-The FastAPI documentation is in https://example.com/api/v1/docs.
+The FastAPI documentation is in https://example.com/api/v2/docs.
 
 The authentication token is there to bypass the cookie for easy developing, so you only need either cookie or
 authentication token to access the locked part of API in the documentation.

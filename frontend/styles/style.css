@@ -61,8 +61,42 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
+    min-height: calc(100vh - 40px);
+}
+
+footer {
+    color: var(--text-color);
+    text-align: left;
+    line-height: 5px;
+    margin-top: auto;
+    width: 100%;
+}
+
+.footer-container {
+    display: flex;
     justify-content: center;
-    height: 100%;
+    align-items: center;
+    padding-top: 40px;
+    gap: 20px;
+    width: 100%;
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.footer-version {
+    margin: 0;
+    text-align: left;
+}
+
+.footer-github {
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.github-logo {
+    flex-shrink: 0;
 }
 
 svg {
@@ -106,6 +140,10 @@ form, .box {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
+.js-display-info:empty {
+    display: none;
+}
+
 label {
     color: var(--text-color);
     display: block;
@@ -135,6 +173,44 @@ button {
 
 button:hover {
     background-color: var(--button-hover-color);
+}
+
+/* Password input container with toggle button */
+.password-input-container {
+    position: relative;
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+.password-input-container input {
+    width: calc(100% - 60px);
+    margin-bottom: 0;
+    padding-right: 45px;
+}
+
+.password-input-container .toggle-password {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    padding: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.password-input-container .toggle-password:hover {
+    background: transparent;
+    opacity: 0.7;
+}
+
+.password-input-container .toggle-password .eye-icon {
+    fill: var(--input-color);
+    width: 24px;
+    height: 24px;
 }
 
 .button-force-hover {
@@ -283,7 +359,7 @@ button:hover {
 }
 
 #invis-admin-button {
-    background-color: var(--body-background-color);
+    background-color: transparent;
     padding: 20px;
 }
 
