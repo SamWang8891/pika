@@ -85,7 +85,7 @@ def delete_record(url: str) -> tuple[int, str]:
             mod_url = 'https://' + url
             status, message, short_str = search(mod_url, query_type=UrlRowType.ORIG, response_type=UrlRowType.SHORT,
                                                 con=con)
-            if status != HTTPStatus.NOT_FOUND:  # TODO: It's a bit wierd to use HTTPStatus here
+            if status != HTTPStatus.NOT_FOUND:
                 if status == HTTPStatus.OK:
                     delete(con, short_str)
                 return status, message
