@@ -1,6 +1,7 @@
 import inspect
 import os
 import sqlite3
+from http import HTTPStatus
 
 import uvicorn
 from dotenv import load_dotenv
@@ -9,8 +10,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
-from starlette.responses import RedirectResponse, JSONResponse
-from http import HTTPStatus
+from starlette.responses import JSONResponse
 
 from cred import is_permitted, change_cred
 from init import del_forbidden_word, sort_dict, load_dictionary, make_urls, make_login
@@ -235,13 +235,12 @@ async def delete_record_route(
             "data": None,
         })
 
-    status, message  = delete_record(url)
+    status, message = delete_record(url)
     return JSONResponse({
         "status": status,
         "message": message,
         "data": None,
     })
-
 
 
 @app.get(

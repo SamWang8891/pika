@@ -4,6 +4,7 @@ from typing import Callable
 
 forbidden: set[str] = {'login', 'admin', 'logout', 'api', 'index', 'index.html', 'change_pass', ''}
 
+
 def load_dictionary(commit: Callable, cur: Cursor, text_file: str):
     """
     Load the dictionary from a text file into the database.
@@ -14,11 +15,12 @@ def load_dictionary(commit: Callable, cur: Cursor, text_file: str):
     """
     cur.execute('DROP TABLE IF EXISTS dict')
     cur.execute('''
-    CREATE TABLE IF NOT EXISTS dict (
-        word TEXT PRIMARY KEY,
-        used INTEGER DEFAULT 0
-    )
-    ''')
+                CREATE TABLE IF NOT EXISTS dict
+                (
+                    word TEXT PRIMARY KEY,
+                    used INTEGER DEFAULT 0
+                )
+                ''')
 
     with open(text_file, 'r') as file:
         words = file.readlines()
@@ -26,8 +28,9 @@ def load_dictionary(commit: Callable, cur: Cursor, text_file: str):
     for word in words:
         w = word.strip()
         cur.execute('''
-        INSERT INTO dict (word) VALUES (?)
-        ''', (w,))
+                    INSERT INTO dict (word)
+                    VALUES (?)
+                    ''', (w,))
 
     commit()
 
@@ -41,11 +44,12 @@ def make_urls(commit: Callable, cur: Cursor):
     """
     cur.execute('DROP TABLE IF EXISTS urls')
     cur.execute('''
-    CREATE TABLE IF NOT EXISTS urls (
-        orig TEXT,
-        short TEXT
-    )
-    ''')
+                CREATE TABLE IF NOT EXISTS urls
+                (
+                    orig  TEXT,
+                    short TEXT
+                )
+                ''')
 
     commit()
 
@@ -59,11 +63,12 @@ def make_login(commit: Callable, cur: Cursor):
     """
     cur.execute('DROP TABLE IF EXISTS login')
     cur.execute('''
-    CREATE TABLE IF NOT EXISTS login (
-        username TEXT PRIMARY KEY,
-        password TEXT
-    )
-    ''')
+                CREATE TABLE IF NOT EXISTS login
+                (
+                    username TEXT PRIMARY KEY,
+                    password TEXT
+                )
+                ''')
     commit()
 
     # default username: admin, password: password
