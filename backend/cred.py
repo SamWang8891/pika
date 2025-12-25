@@ -9,6 +9,7 @@ dbfile = os.path.join(os.path.dirname(__file__), "data.db")
 def is_permitted(username: str, password: str) -> bool:
     """
     Check if the username and password matches the stored credentials
+
     :param username: The username to check
     :param password: The password to verify
     :return: True if the credentials match, False otherwise
@@ -31,6 +32,7 @@ def is_permitted(username: str, password: str) -> bool:
 def change_cred(new_password: str):
     """
     Change the password of the admin account
+
     :param new_password: The new password
     """
     print(new_password)

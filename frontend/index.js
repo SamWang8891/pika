@@ -1,18 +1,20 @@
-import {getHostname} from './hostname.js';
+import {getApiHostname, getWebHostname} from '/hostname.js';
+import {HTTP} from '/response.js'
+
+// Get the hostnames of the server
+const webHostname = await getWebHostname();
+const apiHostname = await getApiHostname();
 
 (async () => {
     try {
-        // Get the hostname of the server
-        const hostname = await getHostname();
-
         // Redirect to the target page (if it is a special page)
-        await doRedir(window.location.pathname, hostname);
+        await doRedir(window.location.pathname);
 
         // Import the QRCodeStyling module
         const QRCodeStyling = (await import('qr-code-styling')).default;
 
         // Bind the shortened URL events
-        await bindShortenEvents(hostname, QRCodeStyling);
+        await bindShortenEvents(QRCodeStyling);
     } catch (error) {
         console.error('Initialization error:', error);
         alert('An error occurred during initialization. Please try again.');
@@ -22,10 +24,9 @@ import {getHostname} from './hostname.js';
 /**
  * Redirect to the target page (if it is a special page)
  * @param suffix - The path suffix from location.pathname
- * @param hostname - The hostname of the server
  * @returns {Promise<void>}
  */
-async function doRedir(suffix, hostname) {
+async function doRedir(suffix) {
     // If it is the home page "/", do nothing
     if (suffix === '/') return;
 
@@ -33,8 +34,7 @@ async function doRedir(suffix, hostname) {
     const otherPages = ['/admin', '/login', '/logout', '/change_pass'];
     if (otherPages.includes(suffix)) {
         // Redirect to the page (ex: /admin -> /admin/)
-        // console.log(suffix);
-        window.location.href = `${hostname}${suffix}/`;
+        window.location.href = `${webHostname}${suffix}/`;
         return;
     }
 
@@ -45,14 +45,14 @@ async function doRedir(suffix, hostname) {
     // If matched none of the above, try to search the record
     const shortKey = suffix.substring(1); // Get rid of the leading "/"
     try {
-        const response = await fetch(`${hostname}/api/v1/search_record?` + new URLSearchParams({
+        const response = await fetch(`${apiHostname}/api/v2/search_record?` + new URLSearchParams({
             short_key: shortKey,
         }).toString(), {
             method: 'GET',
         });
 
         const data = await response.json();
-        if (data.status) {
+        if (data.status === HTTP.OK) {
             // If the record is found, redirect to the original URL
             window.location.href = data.data.original_url;
         } else {
@@ -68,16 +68,15 @@ async function doRedir(suffix, hostname) {
 
 /**
  * Bind the shorten URL events (button, form)
- * @param hostname - The hostname of the server
  * @param QRCodeStyling - The QRCodeStyling module after dynamic import
  * @returns {Promise<void>}
  */
-async function bindShortenEvents(hostname, QRCodeStyling) {
+async function bindShortenEvents(QRCodeStyling) {
     // Bind the click event of all "Shorten URL" buttons
     document.querySelectorAll('.js-shorten-url-button').forEach((button) => {
         button.addEventListener('click', (e) => {
             e.preventDefault();
-            doShorten(hostname, QRCodeStyling);
+            doShorten(QRCodeStyling);
         });
     });
 
@@ -85,7 +84,7 @@ async function bindShortenEvents(hostname, QRCodeStyling) {
     document.querySelectorAll('.js-get-original-qr-button').forEach((button) => {
         button.addEventListener('click', (e) => {
             e.preventDefault();
-            doGetOriginalQR(hostname, QRCodeStyling);
+            doGetOriginalQR(QRCodeStyling);
         });
     });
 
@@ -94,25 +93,32 @@ async function bindShortenEvents(hostname, QRCodeStyling) {
     if (formElement) {
         formElement.addEventListener('submit', (event) => {
             event.preventDefault();
-            doShorten(hostname, QRCodeStyling);
+            doShorten(QRCodeStyling);
         });
     }
 }
 
 /**
  * Perform the shorten URL process
- * @param {string} hostname - The hostname of the server
  * @param {any} QRCodeStyling - The QRCodeStyling module after dynamic import
  */
-async function doShorten(hostname, QRCodeStyling) {
+async function doShorten(QRCodeStyling) {
     // Get the user input URL and turn it into lowercase
-    const inputField = document.querySelector('.js-shorten-url-field');
-    if (!inputField) return;
+    const urlInputField = document.querySelector('.js-shorten-url-field');
+    if (!urlInputField) return;
 
-    let url = inputField.value.trim();
+    let url = urlInputField.value.trim();
     if (!url) return;
     if (url.indexOf(' ') !== -1) {
         alert('URL should not contain spaces.');
+        return;
+    }
+
+    const customKeywordInputField = document.querySelector('.js-custom-keyword-field')
+    let customKeyword = customKeywordInputField.value.trim();
+    // If keyword contains non-character, alert and return
+    if (/[^a-zA-Z0-9]/.test(customKeyword)) {
+        alert('Custom keyword should only contain letters and numbers.');
         return;
     }
 
@@ -127,22 +133,24 @@ async function doShorten(hostname, QRCodeStyling) {
 
     try {
         // Send the request to create a new record
-        const response = await fetch(`${hostname}/api/v1/create_record`, {
+        const response = await fetch(`${apiHostname}/api/v2/create_record`, {
             method: 'POST',
             headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-            body: new URLSearchParams({"url": url}).toString(),
+            body: new URLSearchParams({"url": url, "custom_keyword": customKeyword}).toString(),
         });
         const data = await response.json();
 
-        const shortenedKey = data?.data?.shortened_key;
-        const shortenedUrl = `${hostname}/${shortenedKey}`;
-        if (!shortenedUrl) {
-            alert('Failed to shorten the URL. Please try again.');
+        // Deal with any errors that might return
+        if(data?.status !== HTTP.OK){
+            alert('Failed to create shortened URL: ' + data?.message);
             return;
         }
 
+        const shortenedKey = data?.data?.shortened_key;
+        const shortenedUrl = `${webHostname}/${shortenedKey}`;
+
         // If the URL after trimming space from the right and the left is still empty, do nothing
-        url = inputField.value.trim();
+        url = urlInputField.value.trim();
         if (!url) return;
 
         // If the URL does not start with "http://" or "https://", add "https://"
@@ -151,13 +159,13 @@ async function doShorten(hostname, QRCodeStyling) {
         }
 
         // Clear the input field
-        inputField.value = '';
+        urlInputField.value = '';
+        customKeywordInputField.value = '';
 
         // Render the shortened URL, QRCode, and copy functionality
         renderShortenedResult(url, shortenedUrl, dotColor, backColor, QRCodeStyling);
 
-    } catch
-        (error) {
+    } catch (error) {
         console.error('Error creating shortened URL:', error);
         alert('An error occurred while creating the shortened URL. Please try again.');
     }
@@ -283,10 +291,9 @@ function renderShortenedResult(originalUrl, shortenedUrl, dotColor, backColor, Q
  */
 /**
  * Generate QR code for the original URL without shortening
- * @param {string} hostname - The hostname of the server
  * @param {any} QRCodeStyling - The QRCodeStyling module after dynamic import
  */
-async function doGetOriginalQR(hostname, QRCodeStyling) {
+async function doGetOriginalQR(QRCodeStyling) {
     // Get the user input URL
     const inputField = document.querySelector('.js-shorten-url-field');
     if (!inputField) return;

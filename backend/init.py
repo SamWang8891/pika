@@ -2,21 +2,25 @@ import re
 from sqlite3 import Cursor
 from typing import Callable
 
+forbidden: set[str] = {'login', 'admin', 'logout', 'api', 'index', 'index.html', 'change_pass', ''}
+
 
 def load_dictionary(commit: Callable, cur: Cursor, text_file: str):
     """
     Load the dictionary from a text file into the database.
+
     :param commit: Callable to commit the transaction
     :param cur: Cursor of the database
     :param text_file: Path to the text file containing the dictionary
     """
     cur.execute('DROP TABLE IF EXISTS dict')
     cur.execute('''
-    CREATE TABLE IF NOT EXISTS dict (
-        word TEXT PRIMARY KEY,
-        used INTEGER DEFAULT 0
-    )
-    ''')
+                CREATE TABLE IF NOT EXISTS dict
+                (
+                    word TEXT PRIMARY KEY,
+                    used INTEGER DEFAULT 0
+                )
+                ''')
 
     with open(text_file, 'r') as file:
         words = file.readlines()
@@ -24,8 +28,9 @@ def load_dictionary(commit: Callable, cur: Cursor, text_file: str):
     for word in words:
         w = word.strip()
         cur.execute('''
-        INSERT INTO dict (word) VALUES (?)
-        ''', (w,))
+                    INSERT INTO dict (word)
+                    VALUES (?)
+                    ''', (w,))
 
     commit()
 
@@ -33,16 +38,18 @@ def load_dictionary(commit: Callable, cur: Cursor, text_file: str):
 def make_urls(commit: Callable, cur: Cursor):
     """
     Create the table to store the URLs.
+
     :param commit: Callable to commit the transaction
     :param cur: Cursor of the database
     """
     cur.execute('DROP TABLE IF EXISTS urls')
     cur.execute('''
-    CREATE TABLE IF NOT EXISTS urls (
-        orig TEXT,
-        short TEXT
-    )
-    ''')
+                CREATE TABLE IF NOT EXISTS urls
+                (
+                    orig  TEXT,
+                    short TEXT
+                )
+                ''')
 
     commit()
 
@@ -50,16 +57,18 @@ def make_urls(commit: Callable, cur: Cursor):
 def make_login(commit: Callable, cur: Cursor):
     """
     Create the table to store the login credentials.
+
     :param commit: Callable to commit the transaction
     :param cur: Cursor of the database
     """
     cur.execute('DROP TABLE IF EXISTS login')
     cur.execute('''
-    CREATE TABLE IF NOT EXISTS login (
-        username TEXT PRIMARY KEY,
-        password TEXT
-    )
-    ''')
+                CREATE TABLE IF NOT EXISTS login
+                (
+                    username TEXT PRIMARY KEY,
+                    password TEXT
+                )
+                ''')
     commit()
 
     # default username: admin, password: password
@@ -72,6 +81,7 @@ def make_login(commit: Callable, cur: Cursor):
 def sort_dict(text_file: str):
     """
     Sort the words in a text file alphabetically.
+
     :param text_file: The path to the text file containing the dictionary
     """
     # Read the contents of the file
@@ -100,7 +110,6 @@ def del_forbidden_word(textfile: str):
     :return: None
     """
 
-    forbidden: set[str] = {'login', 'admin', 'logout', 'api', 'index', 'index.html', 'change_pass', ''}
     legal: bool = True
 
     words = set()
