@@ -1,7 +1,8 @@
 [project]
-name = "simple-url-shortener"
+name = "backend"
 version = "0.1.0"
 description = "Add your description here"
+readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
     "argon2-cffi>=25.1.0",
@@ -9,6 +10,5 @@ dependencies = [
     "fastapi>=0.127.0",
     "itsdangerous>=2.2.0",
     "python-multipart>=0.0.21",
-    "unicorn>=2.1.4",
     "uvicorn>=0.40.0",
 ]
