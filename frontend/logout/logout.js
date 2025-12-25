@@ -19,11 +19,11 @@ async function doLogout() {
             method: 'POST',
             credentials: 'include',
         });
-        const data = await response.json();
 
-        if (data.status === HTTP.OK) {
+        if (response.ok) {
             window.location.href = '/';
         } else {
+            const data = await response.json();
             alert('Something went wrong. ' + data.message);
         }
     } catch (error) {

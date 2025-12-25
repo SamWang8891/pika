@@ -1,5 +1,4 @@
 import {getApiHostname, getWebHostname} from '/hostname.js';
-import {HTTP} from '/response.js'
 
 // Get the hostnames of the server
 const webHostname = await getWebHostname();
@@ -51,8 +50,8 @@ async function doRedir(suffix) {
             method: 'GET',
         });
 
-        const data = await response.json();
-        if (data.status === HTTP.OK) {
+        if (response.ok) {
+            const data = await response.json();
             // If the record is found, redirect to the original URL
             window.location.href = data.data.original_url;
         } else {
@@ -141,12 +140,12 @@ async function doShorten(QRCodeStyling) {
         const data = await response.json();
 
         // Deal with any errors that might return
-        if(data?.status !== HTTP.OK){
-            alert('Failed to create shortened URL: ' + data?.message);
+        if(!response.ok){
+            alert('Failed to create shortened URL: ' + data.message);
             return;
         }
 
-        const shortenedKey = data?.data?.shortened_key;
+        const shortenedKey = data.data.shortened_key;
         const shortenedUrl = `${webHostname}/${shortenedKey}`;
 
         // If the URL after trimming space from the right and the left is still empty, do nothing

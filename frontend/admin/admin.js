@@ -11,9 +11,8 @@ const webHostname = await getWebHostname();
         const response = await fetch(`${apiHostname}/api/v2/admin_check`, {
             method: 'GET', headers: {'Content-Type': 'application/x-www-form-urlencoded'}, credentials: 'include'
         });
-        const data = await response.json();
 
-        if (data.status === HTTP.UNAUTHORIZED) {
+        if (response.status === HTTP.UNAUTHORIZED) {
             // Redirect to the login page if not an admin
             window.location.href = '/login/';
             return;
@@ -39,13 +38,13 @@ async function getAllRecords() {
         const response = await fetch(`${apiHostname}/api/v2/get_all_records`, {
             method: 'GET', credentials: 'include',
         });
-        const data = await response.json();
 
-        if (data.status === HTTP.UNAUTHORIZED) {
+        if (response.status === HTTP.UNAUTHORIZED) {
             window.location.href = '/login/';
             return;
         }
 
+        const data = await response.json();
         // Render the data obtained to the page
         renderRecord(data['data']['records']);
     } catch (error) {
@@ -68,12 +67,14 @@ function bindEventListeners() {
                     headers: {'Content-Type': 'application/x-www-form-urlencoded'},
                     credentials: 'include',
                 });
-                const data = await response.json();
-                if (data.status === HTTP.OK) {
+
+                if (response.ok) {
+                    const data = await response.json();
                     alert(data.message);
-                } else if (data.status === HTTP.UNAUTHORIZED) {
+                } else if (response.status === HTTP.UNAUTHORIZED) {
                     window.location.href = '/login/';
                 } else {
+                    const data = await response.json();
                     alert ('Something went wrong' + data.message);
                 }
             } catch (error) {
@@ -179,19 +180,22 @@ async function doSearchDelete(delUrl) {
             body: new URLSearchParams({url: delUrl}).toString(),
             credentials: 'include',
         });
-        const data = await response.json();
 
-        if (data.status === HTTP.UNAUTHORIZED) {
+        if (response.status === HTTP.UNAUTHORIZED) {
             window.location.href = '/login/';
             return;
         }
 
-        if (data.status === HTTP.OK) {
-        } else if (data.status === HTTP.MULTIPLE_CHOICES) {
+        if (response.ok) {
+            // Success
+        } else if (response.status === HTTP.MULTIPLE_CHOICES) {
+            const data = await response.json();
             alert('Multiple found, please specify.');
-        } else if (data.status === HTTP.NOT_FOUND) {
+        } else if (response.status === HTTP.NOT_FOUND) {
+            const data = await response.json();
             alert(data.message);
         } else {
+            const data = await response.json();
             alert('Something went wrong' + data.message);
         }
 

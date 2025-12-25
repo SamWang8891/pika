@@ -64,12 +64,12 @@ const apiHostname = await getApiHostname();
                     credentials: 'include', // Include the cookie information
                 });
 
-                const data = await response.json();
-                if (data.status === HTTP.UNAUTHORIZED) {
+                if (response.status === HTTP.UNAUTHORIZED) {
                     alert('Wrong username or password');
-                } else if (data.status === HTTP.OK) {
+                } else if (response.ok) {
                     window.location.href = '/admin/';
                 } else {
+                    const data = await response.json();
                     alert('Something went wrong. ' + data.message);
                 }
 

@@ -12,7 +12,6 @@ export async function checkAdmin() {
         method: 'GET',
         credentials: 'include', // Including cookie information
     });
-    const data = await response.json();
 
-    return data.status === HTTP.OK;
+    return response.ok;
 }

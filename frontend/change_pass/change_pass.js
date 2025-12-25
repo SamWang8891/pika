@@ -91,13 +91,14 @@ async function doChange() {
             }, body: new URLSearchParams({new_pass: password}).toString(), credentials: 'include',
         });
 
-        const data = await response.json();
-        if (data.status === HTTP.OK) {
+        if (response.ok) {
+            const data = await response.json();
             alert(data.message);
             window.location.href = '/login/';
-        } else if (data.status === HTTP.UNAUTHORIZED) {
+        } else if (response.status === HTTP.UNAUTHORIZED) {
             window.location.href = '/login/';
         } else {
+            const data = await response.json();
             alert('Something went wrong. ' + data.message);
 
             // Clear the input fields

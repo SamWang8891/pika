@@ -188,7 +188,7 @@ async def change_pass_route(
 )
 async def create_record_route(
         url: str = Form(..., description="URL to shorten", examples=[""]),
-        custom_keyword: str = Form(..., description="Custom keyword", examples=[""])
+        custom_keyword: str = Form("", description="Custom keyword", examples=[""]),
 ):
     status, keyword, message = create_record(url, custom_keyword)
     return JSONResponse(status_code=status, content={
@@ -220,8 +220,7 @@ async def delete_record_route(
 ):
     session_data = request.session.get("user", {"permitted": False})
     if not (bypass or session_data.get("permitted")):
-        return JSONResponse({
-            "status": HTTPStatus.UNAUTHORIZED,
+        return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={
             "message": "Unauthorized",
             "data": None,
         })
