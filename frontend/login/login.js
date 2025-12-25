@@ -66,7 +66,7 @@ const apiHostname = await getApiHostname();
 
                 const data = await response.json();
                 if (data.status === HTTP.UNAUTHORIZED) {
-                    alert(data.message);
+                    alert('Wrong username or password');
                 } else if (data.status === HTTP.OK) {
                     window.location.href = '/admin/';
                 } else {
