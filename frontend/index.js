@@ -160,6 +160,7 @@ async function doShorten(QRCodeStyling) {
 
         // Clear the input field
         urlInputField.value = '';
+        customKeywordInputField.value = '';
 
         // Render the shortened URL, QRCode, and copy functionality
         renderShortenedResult(url, shortenedUrl, dotColor, backColor, QRCodeStyling);
