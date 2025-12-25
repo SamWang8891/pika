@@ -248,6 +248,4 @@ Thanks to Liang Ye for helping me to design the UI 🎨.
 
 ## Issues / Bugs? 🙋‍♀️
 
-Encounter issues or bugs? Feel free to report them in Issues and submit Pull Requests. For pull requests, target the
-`modding`
-branch.
+Encounter problems / bugs? Wanted to contribute new ideas? Feel free to open new Issues.

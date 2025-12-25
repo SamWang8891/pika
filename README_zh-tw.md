@@ -236,5 +236,5 @@ Authentication token 存在於 `docker/backend/.env` 檔案中。如果是透過
 
 ## 問題 / Bugs? 🙋‍♀️
 
-歡迎於 Issues 提出任何問題與 Pull Request。請注意 Pull Request 只接受對於 `modding` 分支的請求。
+遇到問題 / bugs？想要提出新點子？歡迎開新 Issues。
 
