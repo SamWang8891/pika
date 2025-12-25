@@ -1,1 +1,2 @@
-hostname: "http://localhost:5173"
+web_hostname: "http://localhost:5173"
+api_hostname: "http://localhost:8000"

@@ -180,7 +180,7 @@
 
 #### 後端 👨‍🔧
 
-FastAPI 說明文件在 https://example.com/api/v1/docs。
+FastAPI 說明文件在 https://example.com/api/v2/docs。
 
 Authentication token 是為了開發方便繞過 cookie 驗證所使用，你可以選擇使用 cookie 或是 token 使用在說明文件中有鎖頭的 API 資源。
 
