@@ -38,7 +38,7 @@ backend/dictionary.txt
 backend/is_reset_password.txt
 backend/.env
 docker/backend/
-docker/web/
+docker/frontend/
 token.txt
 
 # Dev
