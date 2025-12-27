@@ -9,9 +9,6 @@ on:
       release_name:
         description: "Name of the release"
         required: true
-      release_notes:
-        description: "Release notes"
-        required: true
 
 jobs:
   build_and_package:
@@ -26,7 +23,7 @@ jobs:
 
       # Step 2: Install dependencies and build web-frontend
       - name: Install and Build Web Frontend
-        working-directory: ./web-frontend
+        working-directory: ./frontend
         run: |
           npm install
           npm run build
@@ -42,7 +39,7 @@ jobs:
       - name: Remove and copy files
         run: |
           mkdir simple-url-shortener
-          rm -r python-backend/ web-frontend/ icon/ web-frontend.iml
+          rm -r backend/ frontend/ icon/ .github/ .gitignore
           shopt -s extglob
           mv !(simple-url-shortener) simple-url-shortener/
 
@@ -58,5 +55,4 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           tag_name: ${{ github.event.inputs.tag_name }}
           name: ${{ github.event.inputs.release_name }}
-          body: ${{ github.event.inputs.release_notes }}
           files: release.zip
