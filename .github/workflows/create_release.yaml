@@ -33,7 +33,7 @@ jobs:
       - name: Prepare Backend Files
         run: |
           mkdir -p docker/backend
-          rsync -av --exclude '*.iml' python-backend/ docker/backend/
+          rsync -av backend/ docker/backend/
 
       # Step 4: Remove the unwanted source files and copy the rest into simple-url-folder
       - name: Remove and copy files
