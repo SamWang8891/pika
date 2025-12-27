@@ -1,4 +1,8 @@
-# Simple URL Shortener
+<div align="center">
+<img src="/readme_image/Pika-full-logo.svg" width="300" alt="Pika Logo">
+<br /> <br />
+<img src="https://img.shields.io/badge/Version-v2.0.0-green">
+</div>
 
 A very simple URL shortener that converts URLs into easy-to-remember English words for improved usability.
 
@@ -8,6 +12,7 @@ A very simple URL shortener that converts URLs into easy-to-remember English wor
 
 ## Table of Contents 📖
 
+- [Why "Pika" ❓](#why-"pika"-?)
 - [Features ✨](#features-)
 - [Screenshots 📸](#screenshots-)
 - [Usage 🚀](#usage-)
@@ -29,14 +34,18 @@ A very simple URL shortener that converts URLs into easy-to-remember English wor
 
 ---
 
+## Why "Pika" ❓
+Pikas are known for being tiny, moves fast and jumps high. So I named this project Pika to emphasise that it is tiny and runs fast.
+
 ## Features ✨
 
 Found randomly generated URLs too hard to remember? This project offers another solution:
 
 - Generates user-friendly shortened URLs like [https://example.com/apple](https://google.com).
+- Shortened URLs can also be customized.
 - Apple mobile web app capability—add it to your home screen for a full-screen app-like experience.
 - Supports light and dark modes for a better user experience.
-- Fully customizable dictionary for tailored URL shortening.
+- Fully customizable dictionary for randomized URL shortening.
 
 ---
 
@@ -151,25 +160,25 @@ notice.
 
 #### Source Code 🧑‍💻
 
-- **Frontend:** Built using Vite, located in the `web-frontend` folder.
-- **Backend:** Built using Python FastAPI, located in the `python-backend` folder.
+- **Frontend:** Built using Vite, located in the `frontend` folder.
+- **Backend:** Built using Python FastAPI, located in the `backend` folder.
 
 #### Docker 🐳
 
-- `docker/web`: Contains built frontend files.
+- `docker/frontend`: Contains built frontend files.
 - `docker/backend`: Contains Python backend files.
 - `docker/nginx`: Contains Nginx `default.conf`.
 
 ### Prerequisites ✅
 
-1. Node.js >= 23.5.0
-2. Python >= 3.13.1
+1. Node.js >= 22.20.0
+2. Python >= 3.14.2
 
 ### Building 🚧
 
 #### Frontend 🌐
 
-1. Navigate to the `web-frontend` folder.
+1. Navigate to the `frontend` folder.
 2. Install dependencies:
    ```bash
    npm install
@@ -183,23 +192,21 @@ notice.
    ```bash
    npm run build
    ```
-6. Copy the `dist` folder to `docker/` and rename it to `web`.
+6. Copy the `dist` folder to `docker/` and rename it to `frontend`.
 
 #### Backend 👨‍🔧
 
-The FastAPI documentation is in https://example.com/api/v1/docs.
+The FastAPI documentation is in https://example.com/api/v2/docs.
 
 The authentication token is there to bypass the cookie for easy developing, so you only need either cookie or
 authentication token to access the locked part of API in the documentation.
 
 The token is stored in the `docker/backend/.env` file.
-If it's setup by `setup.sh`, there will also be a copy stored in
-`token.txt`.
 
-If you want to modify the backend, follow these steps. Otherwise, copy the `python-backend` folder to `docker/` and
+If you want to modify the backend, follow these steps. Otherwise, copy the `backend` folder to `docker/` and
 rename it to `backend`.
 
-1. Navigate to the `python-backend` folder.
+1. Navigate to the `backend` folder.
 2. (Optional, take venv for example) Create a virtual environment:
    ```bash
    python -m venv venv
@@ -217,7 +224,7 @@ rename it to `backend`.
    ```bash
    python app.py
    ```
-7. After modifying the backend, copy the `python-backend` folder to `docker/` and rename it to `backend`.
+7. After modifying the backend, copy the `backend` folder to `docker/` and rename it to `backend`.
 
 ---
 
@@ -248,6 +255,4 @@ Thanks to Liang Ye for helping me to design the UI 🎨.
 
 ## Issues / Bugs? 🙋‍♀️
 
-Encounter issues or bugs? Feel free to report them in Issues and submit Pull Requests. For pull requests, target the
-`modding`
-branch.
+Encounter problems / bugs? Wanted to contribute new ideas? Feel free to open new Issues.

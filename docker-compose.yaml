@@ -1,19 +1,20 @@
+version: "3.8"
+name: pika
 services:
   nginx:
-    container_name: simple-url-shortener-nginx
+    container_name: pika-nginx
     image: nginx:latest
     volumes:
       - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
-      - ./docker/web:/web
+      - ./docker/frontend:/web
     ports:
-      - "8887:80" # Host:Container
+      - "${WEB_EXPOSED_PORT}:80"
     networks:
       internal_net:
-        ipv4_address: 100.100.223.2
     restart: unless-stopped
 
   python-app:
-    container_name: simple-url-shortener-python
+    container_name: pika-python
     build:
       dockerfile: Dockerfile
     volumes:
@@ -22,12 +23,8 @@ services:
       - "8000"
     networks:
       internal_net:
-        ipv4_address: 100.100.223.3
     restart: unless-stopped
 
 networks:
   internal_net:
     driver: bridge
-    ipam:
-      config:
-        - subnet: 100.100.223.0/24
