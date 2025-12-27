@@ -71,7 +71,6 @@ fi
 # Generate .env and set baseurl and link it to docker/web/.env and docker/backend/.env
 echo -e "\nPlease enter the base URL that is used to show on the webpage of the generated link (including https:// or http:// and the port number behind if not 80 or 443)."
 echo -e "If you are routing this through a proxy, you should enter the proxied information.\n"
-echo -e "Please note that the default port of is 8887, if you are using a different port, you should change it in the docker-compose.yml file.\n"
 read -r -p "Please enter: " baseurl
 
 # They should be the same, except when developing
