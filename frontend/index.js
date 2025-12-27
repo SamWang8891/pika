@@ -234,7 +234,9 @@ function renderShortenedResult(originalUrl, shortenedUrl, dotColor, backColor, Q
         },
         imageOptions: {
             crossOrigin: "anonymous",
-            margin: 20
+            margin: 3,
+            imageSize: 0.4,
+            hideBackgroundDots: true
         }
     });
 
@@ -388,7 +390,7 @@ function renderOriginalQRResult(originalUrl, dotColor, backColor, QRCodeStyling)
         },
         imageOptions: {
             crossOrigin: "anonymous",
-            margin: 20
+            margin: 40
         }
     });
 
