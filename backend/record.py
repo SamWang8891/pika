@@ -41,6 +41,9 @@ def create_record(original_url: str, custom_keyword: str = "") -> tuple[int, str
             cur.execute("SELECT short FROM urls WHERE short = ?", (custom_keyword,))
             result = cur.fetchone()
             if result:
+                # The keyword is already occupied, check if it's the same as the request
+                if result[0] == custom_keyword:
+                    return HTTPStatus.OK, custom_keyword, "Custom record same as last request!"
                 return HTTPStatus.CONFLICT, None, "Keyword is occupied!"
 
             # Check if the keywork is within the dictionary
