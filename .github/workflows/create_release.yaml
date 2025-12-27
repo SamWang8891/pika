@@ -35,18 +35,18 @@ jobs:
           mkdir -p docker/backend
           rsync -av backend/ docker/backend/
 
-      # Step 4: Remove the unwanted source files and copy the rest into simple-url-folder
+      # Step 4: Remove the unwanted source files and copy the rest into pika/
       - name: Remove and copy files
         run: |
-          mkdir simple-url-shortener
+          mkdir pika
           rm -r backend/ frontend/ icon/ .github/ .gitignore
           shopt -s extglob
-          mv !(simple-url-shortener) simple-url-shortener/
+          mv !(pika) pika/
 
       # Step 5: Package Docker Folder into a ZIP
       - name: Create Release ZIP
         run: |
-          zip -r release.zip simple-url-shortener/*
+          zip -r release.zip pika/*
 
       # Step 6: Create GitHub Release and Upload Asset using softprops/action-gh-release
       - name: Create GitHub Release and Upload Asset
