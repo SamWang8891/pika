@@ -21,13 +21,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Step 2: Install dependencies and build web-frontend
+      # Step 2: Install dependencies and build frontend
       - name: Install and Build Web Frontend
         working-directory: ./frontend
         run: |
           npm install
           npm run build
-          mv dist ../docker/web
+          mv dist ../docker/frontend
 
       # Step 3: Prepare Backend Files
       - name: Prepare Backend Files
