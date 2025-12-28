@@ -1,12 +1,12 @@
 <div align="center">
 <img src="/readme_image/Pika-full-logo.svg" width="300" alt="Pika Logo">
-<br /> <br />
-<img src="https://img.shields.io/badge/Version-v2.0.0-green">
+<br /><br />
+<img src="https://img.shields.io/badge/Version-v2.0.1-green">
+<br /><br />
+<a href="README.md">Link for English version</a>
+<br /><br />
+<p>一個簡單的短網址器，將網址轉換為易於記憶的英文單字，使其容易記憶。</p>
 </div>
-
-一個簡單的短網址器，將網址轉換為易於記憶的英文單字，使其容易記憶。
-
-[Link for English version](README.md)
 
 ---
 
@@ -35,6 +35,7 @@
 ---
 
 ## 為什麼將專案命名成 "Pika" ❓
+
 "Pika" 是兔鼠的英文。兔鼠以「小隻」、「移動速度快」以及「跳得高」聞名，故我將此專案命名成 "Pika" 以彰顯此專案的程式空間佔用小且跑得很快。
 
 ## 特點 ✨
@@ -191,7 +192,8 @@
 
 FastAPI 說明文件在 https://example.com/api/v2/docs。
 
-Authentication token 是為了開發方便繞過 cookie 驗證所使用，你可以選擇使用 cookie 或是 token 使用在說明文件中有鎖頭的 API 資源。
+Authentication token 是為了開發方便繞過 cookie 驗證所使用，你可以選擇使用 cookie 或是 token 使用在說明文件中有鎖頭的 API
+資源。
 
 Authentication token 存在於 `docker/backend/.env` 檔案中。
 

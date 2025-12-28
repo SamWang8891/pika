@@ -1,12 +1,12 @@
 <div align="center">
 <img src="/readme_image/Pika-full-logo.svg" width="300" alt="Pika Logo">
-<br /> <br />
-<img src="https://img.shields.io/badge/Version-v2.0.0-green">
+<br /><br />
+<img src="https://img.shields.io/badge/Version-v2.0.1-green">
+<br /><br />
+<a href="README_zh-tw.md">台灣繁體中文 請按這</a>
+<br /><br />
+<p>A very simple URL shortener that converts URLs into easy-to-remember English words for improved usability.</p>
 </div>
-
-A very simple URL shortener that converts URLs into easy-to-remember English words for improved usability.
-
-[台灣繁體中文 請按這](README_zh-tw.md)
 
 ---
 
@@ -35,7 +35,9 @@ A very simple URL shortener that converts URLs into easy-to-remember English wor
 ---
 
 ## Why "Pika" ❓
-Pikas are known for being tiny, moves fast and jumps high. So I named this project Pika to emphasise that it is tiny and runs fast.
+
+Pikas are known for being tiny, moves fast and jumps high. So I named this project Pika to emphasise that it is tiny and
+runs fast.
 
 ## Features ✨
 
