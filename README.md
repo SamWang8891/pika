@@ -137,10 +137,6 @@ Default setting allows 10 requests per minute.
 You can modify the limit in
 `docker/nginx/nginx.conf`.
 
-### Changing the Default Port 🔌
-
-By default, the web service runs on port 8887. To change it, edit the `docker-compose.yaml` file.
-
 ### Customizing the Dictionary 📚
 
 Customize the dictionary by editing the `dictionary.txt` file **before** installation.
