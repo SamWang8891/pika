@@ -1,11 +1,15 @@
 <div align="center">
+
 <img src="/readme_image/Pika-full-logo.svg" width="300" alt="Pika Logo">
-<br /><br />
-<img src="https://img.shields.io/badge/Version-v2.0.1-green">
-<br /><br />
-<a href="README.md">Link for English version</a>
-<br /><br />
-<p>一個簡單的短網址器，將網址轉換為易於記憶的英文單字，使其容易記憶。</p>
+
+# Pika
+
+<img src="https://img.shields.io/badge/Version-v2.1.0-green">
+
+一個簡單的短網址器，將網址轉換為易於記憶的英文單字，使其容易記憶。.
+
+[Link for English version](README.md)
+
 </div>
 
 ---

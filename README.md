@@ -1,11 +1,15 @@
 <div align="center">
+
 <img src="/readme_image/Pika-full-logo.svg" width="300" alt="Pika Logo">
-<br /><br />
-<img src="https://img.shields.io/badge/Version-v2.0.1-green">
-<br /><br />
-<a href="README_zh-tw.md">台灣繁體中文 請按這</a>
-<br /><br />
-<p>A very simple URL shortener that converts URLs into easy-to-remember English words for improved usability.</p>
+
+# Pika
+
+<img src="https://img.shields.io/badge/Version-v2.1.0-green">
+
+A very simple URL shortener that converts URLs into easy-to-remember English words for improved usability.
+
+[台灣繁體中文 請按這](README.zh-TW.md)
+
 </div>
 
 ---
