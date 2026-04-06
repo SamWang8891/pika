@@ -2,6 +2,7 @@ import os
 import sqlite3
 
 from argon2 import PasswordHasher
+from argon2.exceptions import VerifyMismatchError, VerificationError, InvalidHashError
 
 dbfile = os.path.join(os.path.dirname(__file__), "data.db")
 
@@ -25,7 +26,7 @@ def is_permitted(username: str, password: str) -> bool:
         try:
             ph.verify(stored_password, password)
             return True
-        except:
+        except (VerifyMismatchError, VerificationError, InvalidHashError):
             return False
 
 

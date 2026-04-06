@@ -15,7 +15,7 @@ export default function Redirect() {
       try {
         const res = await searchRecord(shortKey);
         if (cancelled) return;
-        if (res.ok && res.data?.data?.original_url) {
+        if (res.ok && res.data?.data?.original_url && /^https?:\/\//i.test(res.data.data.original_url)) {
           window.location.href = res.data.data.original_url;
         } else {
           setError(true);

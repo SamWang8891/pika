@@ -127,7 +127,7 @@ export default function Home() {
                 id="keyword-input"
                 className="input-field"
                 type="text"
-                placeholder="my-custom-word"
+                placeholder="mycustomword"
                 value={keyword}
                 onChange={(e) => setKeyword(e.target.value)}
               />

@@ -6,15 +6,20 @@ async function loadConfig() {
   if (_apiHostname && _webHostname) return;
   if (!_configPromise) {
     _configPromise = (async () => {
-      const response = await fetch('/conf.yaml');
-      if (!response.ok) throw new Error(`Failed to fetch conf.yaml: ${response.status}`);
-      const text = await response.text();
-      const apiMatch = text.match(/api_hostname:\s*["']?([^"'\n]+)["']?\s*$/m);
-      const webMatch = text.match(/web_hostname:\s*["']?([^"'\n]+)["']?\s*$/m);
-      if (!apiMatch) throw new Error('API hostname not found in conf.yaml');
-      if (!webMatch) throw new Error('Web hostname not found in conf.yaml');
-      _apiHostname = apiMatch[1].trim();
-      _webHostname = webMatch[1].trim();
+      try {
+        const response = await fetch('/conf.yaml');
+        if (!response.ok) throw new Error(`Failed to fetch conf.yaml: ${response.status}`);
+        const text = await response.text();
+        const apiMatch = text.match(/api_hostname:\s*["']?([^"'\n]+)["']?\s*$/m);
+        const webMatch = text.match(/web_hostname:\s*["']?([^"'\n]+)["']?\s*$/m);
+        if (!apiMatch) throw new Error('API hostname not found in conf.yaml');
+        if (!webMatch) throw new Error('Web hostname not found in conf.yaml');
+        _apiHostname = apiMatch[1].trim();
+        _webHostname = webMatch[1].trim();
+      } catch (err) {
+        _configPromise = null;
+        throw err;
+      }
     })();
   }
   await _configPromise;

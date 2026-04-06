@@ -14,12 +14,16 @@ export default function ChangePassword() {
 
   useEffect(() => {
     (async () => {
-      const res = await adminCheck();
-      if (!res.ok) {
+      try {
+        const res = await adminCheck();
+        if (!res.ok) {
+          navigate('/login');
+          return;
+        }
+        setChecking(false);
+      } catch {
         navigate('/login');
-        return;
       }
-      setChecking(false);
     })();
   }, [navigate]);
 

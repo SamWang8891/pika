@@ -47,7 +47,7 @@ def make_urls(commit: Callable, cur: Cursor):
                 CREATE TABLE IF NOT EXISTS urls
                 (
                     orig       TEXT,
-                    short      TEXT,
+                    short      TEXT UNIQUE,
                     created_at TEXT DEFAULT (datetime('now')),
                     expires_at TEXT
                 )

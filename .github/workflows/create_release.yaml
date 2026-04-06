@@ -37,10 +37,10 @@ jobs:
 
       # Step 4: Remove the unwanted source files and copy the rest into pika/
       - name: Remove and copy files
+        shell: bash -O extglob {0}
         run: |
           mkdir pika
           rm -r backend/ frontend/ icon/ .github/ .gitignore
-          shopt -s extglob
           mv !(pika) pika/
 
       # Step 5: Package Docker Folder into a ZIP

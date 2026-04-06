@@ -118,7 +118,10 @@ def _calc_expires_at(expires_in: str) -> str | None:
         # Try parsing as custom minutes
         try:
             minutes = int(expires_in)
-            delta = timedelta(minutes=minutes)
+            if minutes <= 0:
+                delta = presets["7d"]
+            else:
+                delta = timedelta(minutes=minutes)
         except (ValueError, TypeError):
             delta = presets["7d"]  # fallback to 7 days
 
@@ -234,11 +237,7 @@ def delete(
     """
     cur = con.cursor()
     cur.execute(f"DELETE FROM urls WHERE short = ?", (unused_short_word,))
-    try:
-        cur.execute("UPDATE dict SET used = 0 WHERE word = ?",
-                    (unused_short_word,))  # If the word is a custom word, this line might fail, but it's okay
-    except:
-        pass
+    cur.execute("UPDATE dict SET used = 0 WHERE word = ?", (unused_short_word,))
     con.commit()
 
 
@@ -252,10 +251,7 @@ def cleanup_expired():
         cur.execute("SELECT short FROM urls WHERE expires_at IS NOT NULL AND expires_at <= datetime('now')")
         expired = cur.fetchall()
         for (short_key,) in expired:
-            try:
-                cur.execute("UPDATE dict SET used = 0 WHERE word = ?", (short_key,))
-            except Exception:
-                pass
+            cur.execute("UPDATE dict SET used = 0 WHERE word = ?", (short_key,))
         cur.execute("DELETE FROM urls WHERE expires_at IS NOT NULL AND expires_at <= datetime('now')")
         con.commit()
 

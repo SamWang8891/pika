@@ -33,6 +33,11 @@ origins = [origin.strip() for origin in ALLOWED_ORIGINS.split(",") if origin.str
 SECRET_KEY = os.getenv('SECRET_KEY')
 BEARER_TOKEN = os.getenv('BEARER_TOKEN')
 
+if not SECRET_KEY:
+    raise RuntimeError("SECRET_KEY must be set in the environment")
+if not BEARER_TOKEN:
+    raise RuntimeError("BEARER_TOKEN must be set in the environment")
+
 # ----------------
 # FastAPI setup
 # ----------------
@@ -324,16 +329,17 @@ if __name__ == "__main__":
     if not os.path.exists(dbfile):
         print("Initializing database...")
         init()
-        exit()
 
     # Reset password if file is_reset_password.txt is 1
     # The file is set by either user manually or by the setup.sh script
+    if not os.path.exists(is_reset_password_file):
+        with open(is_reset_password_file, 'w') as f:
+            f.write('0')
+
     with open(is_reset_password_file, 'r+') as f:
         if f.read().strip() == '1':
-            with sqlite3.connect(dbfile) as con:
-                cur = con.cursor()
-                make_login(con.commit, cur)
-                print("Password reset sucessfully!")
+            change_cred("password")
+            print("Password reset successfully! Default password: 'password'")
             f.seek(0)
             f.write('0')
             f.truncate()

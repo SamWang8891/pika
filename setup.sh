@@ -9,6 +9,14 @@ if [ ! -d "docker/frontend" ] || [ ! -f "docker/backend/app.py" ]; then
 fi
 
 
+# Check if docker is installed
+if ! command -v docker &> /dev/null
+then
+    echo -e "\nDocker not found on your system, or it just simply lacks the sudo power."
+    exit 1
+fi
+
+
 # Prompt if user is here to reset password
 if [ "$(docker ps -aq -f name=pika)" ]; then
   echo ""
@@ -22,14 +30,6 @@ if [ "$(docker ps -aq -f name=pika)" ]; then
     echo -e "Exiting...\n"
     exit 0
   fi
-fi
-
-
-# Check if docker is installed
-if ! command -v docker &> /dev/null
-then
-    echo -e "\nDocker not found on your system, or it just simply lacks the sudo power."
-    exit 1
 fi
 
 
@@ -109,7 +109,7 @@ cp -r dictionary.txt docker/backend/
 
 
 # Set permission
-chmod -R 777 docker
+chmod 600 docker/backend/.env
 
 
 # Docker compose up
