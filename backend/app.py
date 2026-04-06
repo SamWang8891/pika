@@ -14,7 +14,7 @@ from starlette.responses import JSONResponse
 
 from cred import is_permitted, change_cred
 from init import del_forbidden_word, sort_dict, load_dictionary, make_urls, make_login
-from record import create_record, delete_all_records, delete_record, get_all_records, search, UrlRowType
+from record import create_record, delete_all_records, delete_record, get_all_records, search, cleanup_expired, UrlRowType
 from schemas import StatusResponse, ShortenedResponse, SearchResponse, GetRecordsResponse
 
 # -------------------------------
@@ -37,12 +37,12 @@ BEARER_TOKEN = os.getenv('BEARER_TOKEN')
 # FastAPI setup
 # ----------------
 app = FastAPI(
-    title="Simple URL Shortener Backend",
-    description="Backend for Simple URL Shortener service.",
-    version="2.0",
+    title="Pika Backend",
+    description="Backend for Pika service.",
+    version="3.0.0",
     openapi_url="/openapi.json",
     docs_url="/docs",
-    root_path="/api/v2",
+    root_path="/api/v3",
 )
 
 app.add_middleware(
@@ -189,8 +189,9 @@ async def change_pass_route(
 async def create_record_route(
         url: str = Form(..., description="URL to shorten", examples=[""]),
         custom_keyword: str = Form("", description="Custom keyword", examples=[""]),
+        expires_in: str = Form("7d", description="Expiration preset: 1h, 12h, 1d, 7d, never", examples=["7d"]),
 ):
-    status, keyword, message = create_record(url, custom_keyword)
+    status, keyword, message = create_record(url, custom_keyword, expires_in)
     return JSONResponse(status_code=status, content={
         "message": message,
         "data": {
@@ -242,6 +243,7 @@ async def delete_record_route(
 async def search_record_route(
         short_key: str = Query(..., description="Short key to search", examples=[""]),
 ):
+    cleanup_expired()
     status, message, result = search(short_key, query_type=UrlRowType.SHORT, response_type=UrlRowType.ORIG)
     return JSONResponse(status_code=status, content={
         "message": message,

@@ -25,7 +25,7 @@ class SearchResponse(BaseModel):
 
 
 class GetRecordsSchemas(BaseModel):
-    records: dict[str, str]
+    records: list[dict[str, str | None]]
 
 
 class GetRecordsResponse(BaseModel):

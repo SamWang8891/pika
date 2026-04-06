@@ -35,7 +35,6 @@ def change_cred(new_password: str):
 
     :param new_password: The new password
     """
-    print(new_password)
     with sqlite3.connect(dbfile) as con:
         cur = con.cursor()
         hashed = PasswordHasher().hash(new_password)

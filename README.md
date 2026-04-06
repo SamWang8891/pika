@@ -4,7 +4,7 @@
 
 # Pika
 
-<img src="https://img.shields.io/badge/Version-v2.1.0-green">
+<img src="https://img.shields.io/badge/Version-v3.0.0-green">
 
 A very simple URL shortener that converts URLs into easy-to-remember English words for improved usability.
 
@@ -198,7 +198,7 @@ notice.
 
 #### Backend 👨‍🔧
 
-The FastAPI documentation is in https://example.com/api/v2/docs.
+The FastAPI documentation is in https://example.com/api/v3/docs.
 
 The authentication token is there to bypass the cookie for easy developing, so you only need either cookie or
 authentication token to access the locked part of API in the documentation.

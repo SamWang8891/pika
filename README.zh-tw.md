@@ -4,7 +4,7 @@
 
 # Pika
 
-<img src="https://img.shields.io/badge/Version-v2.1.0-green">
+<img src="https://img.shields.io/badge/Version-v3.0.0-green">
 
 一個簡單的短網址器，將網址轉換為易於記憶的英文單字，使其容易記憶。.
 
@@ -190,7 +190,7 @@
 
 #### 後端 👨‍🔧
 
-FastAPI 說明文件在 https://example.com/api/v2/docs。
+FastAPI 說明文件在 https://example.com/api/v3/docs。
 
 Authentication token 是為了開發方便繞過 cookie 驗證所使用，你可以選擇使用 cookie 或是 token 使用在說明文件中有鎖頭的 API
 資源。
