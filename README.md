@@ -1,12 +1,16 @@
 <div align="center">
+
 <img src="/readme_image/Pika-full-logo.svg" width="300" alt="Pika Logo">
-<br /> <br />
-<img src="https://img.shields.io/badge/Version-v2.0.0-green">
-</div>
+
+# Pika
+
+<img src="https://img.shields.io/badge/Version-v3.0.0-green">
 
 A very simple URL shortener that converts URLs into easy-to-remember English words for improved usability.
 
-[台灣繁體中文 請按這](README_zh-tw.md)
+[台灣繁體中文 請按這](README.zh-TW.md)
+
+</div>
 
 ---
 
@@ -35,7 +39,9 @@ A very simple URL shortener that converts URLs into easy-to-remember English wor
 ---
 
 ## Why "Pika" ❓
-Pikas are known for being tiny, moves fast and jumps high. So I named this project Pika to emphasise that it is tiny and runs fast.
+
+Pikas are known for being tiny, moves fast and jumps high. So I named this project Pika to emphasise that it is tiny and
+runs fast.
 
 ## Features ✨
 
@@ -135,10 +141,6 @@ Default setting allows 10 requests per minute.
 You can modify the limit in
 `docker/nginx/nginx.conf`.
 
-### Changing the Default Port 🔌
-
-By default, the web service runs on port 8887. To change it, edit the `docker-compose.yaml` file.
-
 ### Customizing the Dictionary 📚
 
 Customize the dictionary by editing the `dictionary.txt` file **before** installation.
@@ -196,7 +198,7 @@ notice.
 
 #### Backend 👨‍🔧
 
-The FastAPI documentation is in https://example.com/api/v2/docs.
+The FastAPI documentation is in https://example.com/api/v3/docs.
 
 The authentication token is there to bypass the cookie for easy developing, so you only need either cookie or
 authentication token to access the locked part of API in the documentation.

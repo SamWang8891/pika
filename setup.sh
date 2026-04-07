@@ -2,9 +2,17 @@
 
 
 # Check current directory
-if [ ! -f "docker/frontend/index.html" ] || [ ! -f "docker/backend/app.py" ]; then
+if [ ! -d "docker/frontend" ] || [ ! -f "docker/backend/app.py" ]; then
     echo "File(s) missing..."
     echo "Sorry, you must be in the pika directory, extracted from the release zip file, downloaded from the github page."
+    exit 1
+fi
+
+
+# Check if docker is installed
+if ! command -v docker &> /dev/null
+then
+    echo -e "\nDocker not found on your system, or it just simply lacks the sudo power."
     exit 1
 fi
 
@@ -22,14 +30,6 @@ if [ "$(docker ps -aq -f name=pika)" ]; then
     echo -e "Exiting...\n"
     exit 0
   fi
-fi
-
-
-# Check if docker is installed
-if ! command -v docker &> /dev/null
-then
-    echo -e "\nDocker not found on your system, or it just simply lacks the sudo power."
-    exit 1
 fi
 
 
@@ -80,7 +80,7 @@ echo "api_hostname: \"$baseurl\"" >> docker/frontend/conf.yaml
 
 echo -e "\nPlease enter the exposed port of the nginx container (should be the same port as the last one except you have you own proxy)"
 read -r -p "Please enter: " exposed_port
-echo "WEB_EXPOSED_PORT= $exposed_port" >> .env
+echo "WEB_EXPOSED_PORT=$exposed_port" > .env
 
 
 # Remove old database
@@ -91,8 +91,8 @@ rm -f docker/backend/data.db
 echo "0" > docker/backend/is_reset_password.txt
 
 
-# Generate ALLOWED_ORIGINS
-echo "ALLOWED_ORIGINS=$baseurl" >> docker/backend/.env
+# Generate ALLOWED_ORIGINS (overwrite to avoid duplicates on re-run)
+echo "ALLOWED_ORIGINS=$baseurl" > docker/backend/.env
 
 
 # Generate SECRET_KEY
@@ -109,7 +109,7 @@ cp -r dictionary.txt docker/backend/
 
 
 # Set permission
-chmod -R 777 docker
+chmod 600 docker/backend/.env
 
 
 # Docker compose up

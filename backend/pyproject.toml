@@ -1,7 +1,7 @@
 [project]
 name = "backend"
-version = "0.1.0"
-description = "Add your description here"
+version = "3.0.0"
+description = "Backend for Pika URL Shortener"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [

@@ -14,7 +14,7 @@ from starlette.responses import JSONResponse
 
 from cred import is_permitted, change_cred
 from init import del_forbidden_word, sort_dict, load_dictionary, make_urls, make_login
-from record import create_record, delete_all_records, delete_record, get_all_records, search, UrlRowType
+from record import create_record, delete_all_records, delete_record, get_all_records, search, cleanup_expired, UrlRowType
 from schemas import StatusResponse, ShortenedResponse, SearchResponse, GetRecordsResponse
 
 # -------------------------------
@@ -33,16 +33,21 @@ origins = [origin.strip() for origin in ALLOWED_ORIGINS.split(",") if origin.str
 SECRET_KEY = os.getenv('SECRET_KEY')
 BEARER_TOKEN = os.getenv('BEARER_TOKEN')
 
+if not SECRET_KEY:
+    raise RuntimeError("SECRET_KEY must be set in the environment")
+if not BEARER_TOKEN:
+    raise RuntimeError("BEARER_TOKEN must be set in the environment")
+
 # ----------------
 # FastAPI setup
 # ----------------
 app = FastAPI(
-    title="Simple URL Shortener Backend",
-    description="Backend for Simple URL Shortener service.",
-    version="2.0",
+    title="Pika Backend",
+    description="Backend for Pika service.",
+    version="3.0.0",
     openapi_url="/openapi.json",
     docs_url="/docs",
-    root_path="/api/v2",
+    root_path="/api/v3",
 )
 
 app.add_middleware(
@@ -189,8 +194,9 @@ async def change_pass_route(
 async def create_record_route(
         url: str = Form(..., description="URL to shorten", examples=[""]),
         custom_keyword: str = Form("", description="Custom keyword", examples=[""]),
+        expires_in: str = Form("7d", description="Expiration preset: 1h, 12h, 1d, 7d, never", examples=["7d"]),
 ):
-    status, keyword, message = create_record(url, custom_keyword)
+    status, keyword, message = create_record(url, custom_keyword, expires_in)
     return JSONResponse(status_code=status, content={
         "message": message,
         "data": {
@@ -242,6 +248,7 @@ async def delete_record_route(
 async def search_record_route(
         short_key: str = Query(..., description="Short key to search", examples=[""]),
 ):
+    cleanup_expired()
     status, message, result = search(short_key, query_type=UrlRowType.SHORT, response_type=UrlRowType.ORIG)
     return JSONResponse(status_code=status, content={
         "message": message,
@@ -322,16 +329,17 @@ if __name__ == "__main__":
     if not os.path.exists(dbfile):
         print("Initializing database...")
         init()
-        exit()
 
     # Reset password if file is_reset_password.txt is 1
     # The file is set by either user manually or by the setup.sh script
+    if not os.path.exists(is_reset_password_file):
+        with open(is_reset_password_file, 'w') as f:
+            f.write('0')
+
     with open(is_reset_password_file, 'r+') as f:
         if f.read().strip() == '1':
-            with sqlite3.connect(dbfile) as con:
-                cur = con.cursor()
-                make_login(con.commit, cur)
-                print("Password reset sucessfully!")
+            change_cred("password")
+            print("Password reset successfully! Default password: 'password'")
             f.seek(0)
             f.write('0')
             f.truncate()
