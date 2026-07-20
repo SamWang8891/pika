@@ -10,7 +10,7 @@ from init import forbidden
 dbfile = os.path.join(os.path.dirname(__file__), "data.db")
 
 
-def create_record(original_url: str, custom_keyword: str = "", expires_in: str = "7d") -> tuple[int, str | None, str]:
+def create_record(original_url: str, custom_keyword: str = "", expires_in: str = "7d", mask: bool = False) -> tuple[int, str | None, str]:
     """
     Create a new shorten URL record in the database
 
@@ -61,8 +61,8 @@ def create_record(original_url: str, custom_keyword: str = "", expires_in: str =
 
             # Create a record with that keyword
             cur.execute(
-                "INSERT INTO urls (orig, short, created_at, expires_at) VALUES (?, ?, datetime('now'), ?)",
-                (original_url, custom_keyword, expires_at)
+                "INSERT INTO urls (orig, short, created_at, expires_at, mask) VALUES (?, ?, datetime('now'), ?, ?)",
+                (original_url, custom_keyword, expires_at, int(mask))
             )
             con.commit()
 
@@ -86,8 +86,8 @@ def create_record(original_url: str, custom_keyword: str = "", expires_in: str =
 
             cur.execute("UPDATE dict SET used = 1 WHERE word = ?", (shortened_key,))
             cur.execute(
-                "INSERT INTO urls (orig, short, created_at, expires_at) VALUES (?, ?, datetime('now'), ?)",
-                (original_url, shortened_key, expires_at)
+                "INSERT INTO urls (orig, short, created_at, expires_at, mask) VALUES (?, ?, datetime('now'), ?, ?)",
+                (original_url, shortened_key, expires_at, int(mask))
             )
             con.commit()
             return HTTPStatus.OK, shortened_key, "Record created!"
@@ -241,6 +241,17 @@ def delete(
     con.commit()
 
 
+def search_for_redirect(short_key: str) -> tuple[int, str, str | None, bool]:
+    with sqlite3.connect(dbfile) as con:
+        row = con.execute(
+            "SELECT orig, mask FROM urls WHERE short = ? AND (expires_at IS NULL OR expires_at > datetime('now'))",
+            (short_key,)
+        ).fetchone()
+        if not row:
+            return HTTPStatus.NOT_FOUND, "No matching record found", None, False
+        return HTTPStatus.OK, "Got one record", row[0], bool(row[1])
+
+
 def cleanup_expired():
     """
     Remove expired records and reclaim their dictionary words.
@@ -267,10 +278,10 @@ def get_all_records() -> tuple[int, str, list[dict[str, str]]]:
 
     with sqlite3.connect(dbfile) as con:
         cur = con.cursor()
-        cur.execute("SELECT orig, short, created_at, expires_at FROM urls")
+        cur.execute("SELECT orig, short, created_at, expires_at, mask FROM urls")
         records = cur.fetchall()
         record_list = [
-            {"orig": orig, "short": short, "created_at": created_at, "expires_at": expires_at}
-            for orig, short, created_at, expires_at in records
+            {"orig": orig, "short": short, "created_at": created_at, "expires_at": expires_at, "mask": bool(mask)}
+            for orig, short, created_at, expires_at, mask in records
         ]
         return HTTPStatus.OK, "Success", record_list

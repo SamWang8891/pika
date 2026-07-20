@@ -14,7 +14,7 @@ from starlette.responses import JSONResponse
 
 from cred import is_permitted, change_cred
 from init import del_forbidden_word, sort_dict, load_dictionary, make_urls, make_login
-from record import create_record, delete_all_records, delete_record, get_all_records, search, cleanup_expired, UrlRowType
+from record import create_record, delete_all_records, delete_record, get_all_records, search, search_for_redirect, cleanup_expired, UrlRowType
 from schemas import StatusResponse, ShortenedResponse, SearchResponse, GetRecordsResponse
 
 # -------------------------------
@@ -195,8 +195,9 @@ async def create_record_route(
         url: str = Form(..., description="URL to shorten", examples=[""]),
         custom_keyword: str = Form("", description="Custom keyword", examples=[""]),
         expires_in: str = Form("7d", description="Expiration preset: 1h, 12h, 1d, 7d, never", examples=["7d"]),
+        mask: bool = Form(False, description="URL masking (iframe cloaking)"),
 ):
-    status, keyword, message = create_record(url, custom_keyword, expires_in)
+    status, keyword, message = create_record(url, custom_keyword, expires_in, mask)
     return JSONResponse(status_code=status, content={
         "message": message,
         "data": {
@@ -249,11 +250,12 @@ async def search_record_route(
         short_key: str = Query(..., description="Short key to search", examples=[""]),
 ):
     cleanup_expired()
-    status, message, result = search(short_key, query_type=UrlRowType.SHORT, response_type=UrlRowType.ORIG)
+    status, message, result, mask = search_for_redirect(short_key)
     return JSONResponse(status_code=status, content={
         "message": message,
         "data": {
-            "original_url": result
+            "original_url": result,
+            "mask": mask,
         },
     })
 
@@ -329,6 +331,13 @@ if __name__ == "__main__":
     if not os.path.exists(dbfile):
         print("Initializing database...")
         init()
+
+    # Migrate: add mask column if missing
+    with sqlite3.connect(dbfile) as con:
+        try:
+            con.execute("ALTER TABLE urls ADD COLUMN mask INTEGER DEFAULT 0")
+        except sqlite3.OperationalError:
+            pass
 
     # Reset password if file is_reset_password.txt is 1
     # The file is set by either user manually or by the setup.sh script

@@ -6,6 +6,7 @@ export default function Redirect() {
   const { shortKey } = useParams();
   const navigate = useNavigate();
   const [error, setError] = useState(false);
+  const [maskedUrl, setMaskedUrl] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -16,7 +17,11 @@ export default function Redirect() {
         const res = await searchRecord(shortKey);
         if (cancelled) return;
         if (res.ok && res.data?.data?.original_url && /^https?:\/\//i.test(res.data.data.original_url)) {
-          window.location.href = res.data.data.original_url;
+          if (res.data.data.mask) {
+            setMaskedUrl(res.data.data.original_url);
+          } else {
+            window.location.href = res.data.data.original_url;
+          }
         } else {
           setError(true);
           timerId = setTimeout(() => navigate('/'), 2000);
@@ -34,6 +39,17 @@ export default function Redirect() {
       clearTimeout(timerId);
     };
   }, [shortKey, navigate]);
+
+  if (maskedUrl) {
+    return (
+      <iframe
+        src={maskedUrl}
+        style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', border: 'none', zIndex: 9999 }}
+        title="Masked content"
+        sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
+      />
+    );
+  }
 
   return (
     <div className="page" style={{ justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>

@@ -40,12 +40,12 @@ async function apiBase() {
   return `${host}/api/v3`;
 }
 
-export async function createRecord(url, customKeyword = '', expiresIn = '7d') {
+export async function createRecord(url, customKeyword = '', expiresIn = '7d', mask = false) {
   const base = await apiBase();
   const res = await fetch(`${base}/create_record`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ url, custom_keyword: customKeyword, expires_in: expiresIn }),
+    body: new URLSearchParams({ url, custom_keyword: customKeyword, expires_in: expiresIn, mask: mask.toString() }),
     credentials: 'include',
   });
   const data = await res.json();

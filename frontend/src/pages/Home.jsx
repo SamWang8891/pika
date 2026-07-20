@@ -8,6 +8,7 @@ export default function Home() {
   const [url, setUrl] = useState('');
   const [keyword, setKeyword] = useState('');
   const [expiresIn, setExpiresIn] = useState('7d');
+  const [mask, setMask] = useState(false);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null); // { shortenedUrl, originalUrl, isOriginalQR }
   const { dark } = useTheme();
@@ -62,7 +63,7 @@ export default function Home() {
     setLoading(true);
     try {
       const webHost = await getWebHostname();
-      const res = await createRecord(trimmed, keyword.trim(), expiresIn);
+      const res = await createRecord(trimmed, keyword.trim(), expiresIn, mask);
       if (!res.ok) {
         toast.error(res.data.message || 'Failed to create link');
         return;
@@ -134,6 +135,18 @@ export default function Home() {
             </div>
 
             <ExpirySelector value={expiresIn} onChange={setExpiresIn} />
+
+            <div>
+              <label className="input-label">Redirect mode</label>
+              <div className="pill-group">
+                <button type="button" className={`pill ${!mask ? 'active' : ''}`} onClick={() => setMask(false)}>
+                  Redirect
+                </button>
+                <button type="button" className={`pill ${mask ? 'active' : ''}`} onClick={() => setMask(true)}>
+                  Mask URL
+                </button>
+              </div>
+            </div>
 
             <div style={buttonRowStyle}>
               <button type="submit" className="btn btn-primary" disabled={loading} style={{ flex: 1 }}>
