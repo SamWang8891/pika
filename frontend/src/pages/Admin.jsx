@@ -154,6 +154,7 @@ export default function Admin() {
                   <th>Short</th>
                   <th>Created</th>
                   <th>Expires</th>
+                  <th>Mode</th>
                   <th style={{ width: 80 }}>Action</th>
                 </tr>
               </thead>
@@ -187,6 +188,11 @@ export default function Admin() {
                       ) : (
                         <span className="badge badge-green">Never</span>
                       )}
+                    </td>
+                    <td>
+                      <span className={`badge ${r.mask ? 'badge-amber' : 'badge-green'}`}>
+                        {r.mask ? 'Masked' : 'Redirect'}
+                      </span>
                     </td>
                     <td>
                       <button
