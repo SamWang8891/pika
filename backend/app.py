@@ -5,16 +5,16 @@ from http import HTTPStatus
 
 import uvicorn
 from dotenv import load_dotenv
-from fastapi import FastAPI, Request, Depends, Form, Query
+from fastapi import APIRouter, FastAPI, Request, Depends, Form, Query
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
-from starlette.responses import JSONResponse
+from starlette.responses import JSONResponse, RedirectResponse
 
 from cred import is_permitted, change_cred
 from init import del_forbidden_word, sort_dict, load_dictionary, make_urls, make_login
-from record import create_record, delete_all_records, delete_record, get_all_records, search, cleanup_expired, UrlRowType
+from record import create_record, delete_all_records, delete_record, get_all_records, search_for_redirect
 from schemas import StatusResponse, ShortenedResponse, SearchResponse, GetRecordsResponse
 
 # -------------------------------
@@ -41,14 +41,19 @@ if not BEARER_TOKEN:
 # ----------------
 # FastAPI setup
 # ----------------
+# The single place the API version lives. nginx proxies this path through untouched,
+# so changing it here is all a version bump needs on the backend side.
+API_PREFIX = "/api/v4"
+
 app = FastAPI(
     title="Pika Backend",
     description="Backend for Pika service.",
-    version="3.0.0",
-    openapi_url="/openapi.json",
-    docs_url="/docs",
-    root_path="/api/v3",
+    version="4.0.0",
+    openapi_url=f"{API_PREFIX}/openapi.json",
+    docs_url=f"{API_PREFIX}/docs",
 )
+
+router = APIRouter(prefix=API_PREFIX)
 
 app.add_middleware(
     SessionMiddleware,
@@ -84,7 +89,7 @@ class SessionData(BaseModel):
 # ---------
 # Routes
 # ---------
-@app.get(
+@router.get(
     "/status",
     response_model=StatusResponse,
     summary="Status of backend",
@@ -98,7 +103,7 @@ def status_route():
     })
 
 
-@app.post(
+@router.post(
     "/logout",
     response_model=StatusResponse,
     summary="Logout",
@@ -113,7 +118,7 @@ def logout_route(request: Request):
     })
 
 
-@app.post(
+@router.post(
     "/login",
     response_model=StatusResponse,
     summary="Login",
@@ -135,7 +140,7 @@ async def login_route(request: Request, username: str = Form(...), password: str
     })
 
 
-@app.get(
+@router.get(
     "/admin_check",
     response_model=StatusResponse,
     summary="Admin check",
@@ -157,7 +162,7 @@ async def check_user_route(request: Request):
     })
 
 
-@app.post(
+@router.post(
     "/change_pass",
     response_model=StatusResponse,
     summary="Change password",
@@ -184,7 +189,7 @@ async def change_pass_route(
     })
 
 
-@app.post(
+@router.post(
     "/create_record",
     response_model=ShortenedResponse,
     summary="Create a record",
@@ -205,7 +210,7 @@ async def create_record_route(
     })
 
 
-@app.delete(
+@router.delete(
     "/delete_record",
     response_model=StatusResponse,
     summary="Delete a record",
@@ -238,7 +243,7 @@ async def delete_record_route(
     })
 
 
-@app.get(
+@router.get(
     "/search_record",
     response_model=SearchResponse,
     summary="Search a record",
@@ -248,17 +253,43 @@ async def delete_record_route(
 async def search_record_route(
         short_key: str = Query(..., description="Short key to search", examples=[""]),
 ):
-    cleanup_expired()
-    status, message, result = search(short_key, query_type=UrlRowType.SHORT, response_type=UrlRowType.ORIG)
+    status, message, result = search_for_redirect(short_key)
     return JSONResponse(status_code=status, content={
         "message": message,
         "data": {
-            "original_url": result
+            "original_url": result,
         },
     })
 
 
-@app.get(
+@router.api_route(
+    "/go/{short_key}",
+    # FastAPI, unlike bare Starlette, does not pair HEAD with GET — and link checkers
+    # and chat previewers send HEAD, so without this a shortened link 405s for them.
+    methods=["GET", "HEAD"],
+    summary="Redirect to the original URL",
+    description=inspect.cleandoc("""
+        Resolve a short key and issue a 307 redirect to the original URL.\n
+        Returns 404 if the key is unknown or expired, which nginx turns into the SPA fallback.\n
+        307 (not 301/308) is deliberate: expired keywords are reclaimed into the dictionary and
+        reissued, so a permanently-cached redirect would send visitors to a stale destination.
+        """),
+    tags=["Record"],
+    response_class=RedirectResponse,
+    status_code=HTTPStatus.TEMPORARY_REDIRECT,
+)
+def go_route(short_key: str):
+    status, message, result = search_for_redirect(short_key)
+    if status != HTTPStatus.OK:
+        return JSONResponse(status_code=HTTPStatus.NOT_FOUND, content={
+            "message": message,
+            "data": None,
+        })
+
+    return RedirectResponse(url=result, status_code=HTTPStatus.TEMPORARY_REDIRECT)
+
+
+@router.get(
     "/get_all_records",
     response_model=GetRecordsResponse,
     summary="Get all records",
@@ -285,7 +316,7 @@ def get_all_records_route(
     })
 
 
-@app.delete(
+@router.delete(
     "/delete_all_records",
     response_model=StatusResponse,
     summary="Purge all records",
@@ -308,6 +339,9 @@ def delete_all_records_route(
         "message": "All records deleted!",
         "data": None,
     })
+
+
+app.include_router(router)
 
 
 def init():

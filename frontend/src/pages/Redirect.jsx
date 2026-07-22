@@ -7,6 +7,8 @@ export default function Redirect() {
   const navigate = useNavigate();
   const [error, setError] = useState(false);
 
+  // nginx resolves known keys to a 307 before the SPA ever loads, so in production
+  // this only runs for misses. It stays because `vite dev` has no such proxy.
   useEffect(() => {
     let cancelled = false;
     let timerId;

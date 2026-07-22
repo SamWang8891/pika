@@ -62,7 +62,7 @@ export default function Layout() {
 
       {/* Footer */}
       <footer style={footerStyle}>
-        <span style={footerVersionStyle}>v3.0.0</span>
+        <span style={footerVersionStyle}>v4.0.0</span>
         <a
           href="https://github.com/SamWang8891/pika"
           target="_blank"

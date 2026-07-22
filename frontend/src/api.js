@@ -37,7 +37,7 @@ export async function getWebHostname() {
 
 async function apiBase() {
   const host = await getApiHostname();
-  return `${host}/api/v3`;
+  return `${host}/api/v4`;
 }
 
 export async function createRecord(url, customKeyword = '', expiresIn = '7d') {
