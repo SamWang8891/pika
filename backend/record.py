@@ -27,6 +27,9 @@ def create_record(original_url: str, custom_keyword: str = "", expires_in: str =
     if not original_url.startswith(('https://', 'http://')):
         original_url = 'https://' + original_url
 
+    # Reclaim words from expired records before allocating a new one
+    cleanup_expired()
+
     # Calculate expires_at timestamp
     expires_at = _calc_expires_at(expires_in)
 
@@ -132,7 +135,7 @@ def delete_record(url: str) -> tuple[int, str]:
     """
     Delete the record from the database
 
-    :param url: The URL to delete, see app.py (/api/v3/delete_record) for the detailed accepted types
+    :param url: The URL to delete, see app.py (/api/v4/delete_record) for the detailed accepted types
     :return: A tuple. First element (int) is the status code. Second element (str) is the return message.
     """
     with sqlite3.connect(dbfile) as con:
@@ -239,6 +242,17 @@ def delete(
     cur.execute(f"DELETE FROM urls WHERE short = ?", (unused_short_word,))
     cur.execute("UPDATE dict SET used = 0 WHERE word = ?", (unused_short_word,))
     con.commit()
+
+
+def search_for_redirect(short_key: str) -> tuple[int, str, str | None]:
+    with sqlite3.connect(dbfile) as con:
+        row = con.execute(
+            "SELECT orig FROM urls WHERE short = ? AND (expires_at IS NULL OR expires_at > datetime('now'))",
+            (short_key,)
+        ).fetchone()
+        if not row:
+            return HTTPStatus.NOT_FOUND, "No matching record found", None
+        return HTTPStatus.OK, "Got one record", row[0]
 
 
 def cleanup_expired():

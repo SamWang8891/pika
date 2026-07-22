@@ -4,13 +4,20 @@
 
 # Pika
 
-<img src="https://img.shields.io/badge/Version-v3.0.0-green">
+<img src="https://img.shields.io/badge/Version-v4.0.0-green">
 
 一個簡單的短網址器，將網址轉換為易於記憶的英文單字，使其容易記憶。.
 
 [Link for English version](README.md)
 
 </div>
+
+---
+
+> [!IMPORTANT]
+> **v4.0.0 是純自架版 Pika 的最後一個版本。**
+> 此版本之後的開發將轉往 Cloudflare Workers + D1。
+> 本版本仍可透過 `setup.sh` 完整安裝與使用。
 
 ---
 
@@ -21,6 +28,7 @@
 - [截圖 📸](#截圖-)
 - [用法 🚀](#用法-)
     - [安裝 ⚙️](#安裝-)
+    - [導向行為 🔀](#導向行為-)
     - [管理員頁面 🛡](#管理員頁面-)
     - [設定速率限制 🕒](#設定速率限制-)
     - [修改預設連接埠 🔌](#修改預設連接埠-)
@@ -48,6 +56,7 @@
 
 - 生成易於記憶的縮短網址，例如 [https://example.com/apple](https://google.com)。
 - 縮短網址也可以自定義。
+- 由伺服器端以 HTTP `307` 導向，因此短網址在瀏覽器以及 `curl`、PowerShell 的 `irm` 等命令列工具中皆可使用。
 - Apple 手機網頁應用程式功能——將其添加到主螢幕，以獲得全螢幕應用程式般的體驗。
 - 支援淺色和深色模式。
 - 自定義字典，客製化隨機生成的短網址。
@@ -119,6 +128,24 @@
 4. 跟隨提示輸入變數和參數。
 5. 大功告成！
 
+### 導向行為 🔀
+
+短網址由伺服器端解析，並回傳 HTTP `307 Temporary Redirect`，中間不會渲染任何頁面，因此短網址在任何 HTTP 客戶端皆可使用：
+
+```bash
+curl -L https://example.com/apple
+```
+
+```powershell
+irm https://example.com/apple | iex
+```
+
+使用 `307` 而非 `301` 是刻意的設計。當短網址過期後，其關鍵字會被歸還至字典中，日後可能被指派給不同的網址；而 `301`
+會被瀏覽器永久快取，導致訪客持續被導向至舊的目的地。
+
+> ⚠️ 將短網址直接以管線傳入 shell 執行，等同執行該筆記錄當下所指向的任何內容，且任何具有管理員權限的人都能更改其指向。
+> 請僅對自己掌控的連結這樣做。
+
 ### 管理員頁面 🛡
 
 在 `https://example.com/admin` 訪問管理員面板。
@@ -134,7 +161,7 @@
 
 ### 設定速率限制 🕒
 
-速率限制設定在 nginx。預設允許每分鐘 10 次請求。可以在 `docker/nginx/nginx.conf` 中修改限制。
+速率限制設定在 nginx。預設允許每個 IP 每秒 10 次請求，突發上限為 10。可以在 `docker/nginx/default.conf` 中修改限制。
 
 ### 客製化字典 📚
 
@@ -190,7 +217,7 @@
 
 #### 後端 👨‍🔧
 
-FastAPI 說明文件在 https://example.com/api/v3/docs。
+FastAPI 說明文件在 https://example.com/api/v4/docs。
 
 Authentication token 是為了開發方便繞過 cookie 驗證所使用，你可以選擇使用 cookie 或是 token 使用在說明文件中有鎖頭的 API
 資源。
