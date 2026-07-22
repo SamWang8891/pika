@@ -49,8 +49,7 @@ def make_urls(commit: Callable, cur: Cursor):
                     orig       TEXT,
                     short      TEXT UNIQUE,
                     created_at TEXT DEFAULT (datetime('now')),
-                    expires_at TEXT,
-                    mask       INTEGER DEFAULT 0
+                    expires_at TEXT
                 )
                 ''')
 
