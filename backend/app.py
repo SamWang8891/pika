@@ -262,8 +262,11 @@ async def search_record_route(
     })
 
 
-@router.get(
+@router.api_route(
     "/go/{short_key}",
+    # FastAPI, unlike bare Starlette, does not pair HEAD with GET — and link checkers
+    # and chat previewers send HEAD, so without this a shortened link 405s for them.
+    methods=["GET", "HEAD"],
     summary="Redirect to the original URL",
     description=inspect.cleandoc("""
         Resolve a short key and issue a 307 redirect to the original URL.\n
