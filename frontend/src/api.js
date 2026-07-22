@@ -37,15 +37,15 @@ export async function getWebHostname() {
 
 async function apiBase() {
   const host = await getApiHostname();
-  return `${host}/api/v3`;
+  return `${host}/api/v4`;
 }
 
-export async function createRecord(url, customKeyword = '', expiresIn = '7d', mask = false) {
+export async function createRecord(url, customKeyword = '', expiresIn = '7d') {
   const base = await apiBase();
   const res = await fetch(`${base}/create_record`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ url, custom_keyword: customKeyword, expires_in: expiresIn, mask: mask.toString() }),
+    body: new URLSearchParams({ url, custom_keyword: customKeyword, expires_in: expiresIn }),
     credentials: 'include',
   });
   const data = await res.json();

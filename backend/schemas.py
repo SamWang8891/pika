@@ -17,7 +17,6 @@ class ShortenedResponse(BaseModel):
 
 class SearchSchemas(BaseModel):
     original_url: str
-    mask: bool
 
 
 class SearchResponse(BaseModel):
