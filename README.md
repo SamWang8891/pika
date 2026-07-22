@@ -4,13 +4,20 @@
 
 # Pika
 
-<img src="https://img.shields.io/badge/Version-v3.0.0-green">
+<img src="https://img.shields.io/badge/Version-v4.0.0-green">
 
 A very simple URL shortener that converts URLs into easy-to-remember English words for improved usability.
 
 [台灣繁體中文 請按這](README.zh-TW.md)
 
 </div>
+
+---
+
+> [!IMPORTANT]
+> **v4.0.0 is the final release of the pure self-hosted Pika.**
+> Development after this release moves to Cloudflare Workers + D1.
+> This version remains fully installable and usable via `setup.sh`.
 
 ---
 
@@ -21,6 +28,7 @@ A very simple URL shortener that converts URLs into easy-to-remember English wor
 - [Screenshots 📸](#screenshots-)
 - [Usage 🚀](#usage-)
     - [Installation ⚙️](#installation-)
+    - [Redirect Behavior 🔀](#redirect-behavior-)
     - [Admin Panel 🛡](#admin-panel-)
     - [Setting the Rate Limit 🕒](#setting-the-rate-limit-)
     - [Changing the Default Port 🔌](#changing-the-default-port-)
@@ -49,6 +57,8 @@ Found randomly generated URLs too hard to remember? This project offers another 
 
 - Generates user-friendly shortened URLs like [https://example.com/apple](https://google.com).
 - Shortened URLs can also be customized.
+- Resolved server-side as an HTTP `307`, so links work in browsers *and* in command-line tools such as
+  `curl` or PowerShell's `irm`.
 - Apple mobile web app capability—add it to your home screen for a full-screen app-like experience.
 - Supports light and dark modes for a better user experience.
 - Fully customizable dictionary for randomized URL shortening.
@@ -121,6 +131,26 @@ Found randomly generated URLs too hard to remember? This project offers another 
 4. Follow the prompts to enter variables and parameters.
 5. You're all set!
 
+### Redirect Behavior 🔀
+
+Shortened links are resolved by the server and answered with an HTTP `307 Temporary Redirect`. No page is
+rendered in between, so a link works anywhere an HTTP client does:
+
+```bash
+curl -L https://example.com/apple
+```
+
+```powershell
+irm https://example.com/apple | iex
+```
+
+`307` rather than `301` is deliberate. When a link expires, its keyword is returned to the dictionary and may
+later be issued to a different URL — a `301` would be cached permanently by browsers and keep sending
+visitors to the old destination.
+
+> ⚠️ Piping a shortened link into a shell runs whatever that record currently points at, and anyone with
+> admin access can repoint it. Only do this with links you control.
+
 ### Admin Panel 🛡
 
 Access the admin panel at: `https://example.com/admin`
@@ -137,9 +167,9 @@ Remember to change the password after the first login.
 ### Setting the Rate Limit 🕒
 
 The rate limit is set in nginx.
-Default setting allows 10 requests per minute.
+Default setting allows 10 requests per second per IP address, with a burst of 10.
 You can modify the limit in
-`docker/nginx/nginx.conf`.
+`docker/nginx/default.conf`.
 
 ### Customizing the Dictionary 📚
 
@@ -198,7 +228,7 @@ notice.
 
 #### Backend 👨‍🔧
 
-The FastAPI documentation is in https://example.com/api/v3/docs.
+The FastAPI documentation is in https://example.com/api/v4/docs.
 
 The authentication token is there to bypass the cookie for easy developing, so you only need either cookie or
 authentication token to access the locked part of API in the documentation.
