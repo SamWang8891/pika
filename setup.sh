@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 
 # Check current directory
@@ -25,8 +26,8 @@ if [ "$(docker ps -aq -f name=pika)" ]; then
     echo "1" > docker/backend/is_reset_password.txt
     echo -e "Password reset!\n"
     echo -e "Restarting the service, please wait patiently...\n"
-    docker restart pika-nginx
-    docker restart pika-python
+    docker restart pika-nginx || true
+    docker restart pika-python || true
     echo -e "Exiting...\n"
     exit 0
   fi
@@ -39,10 +40,10 @@ if [ "$(docker ps -aq -f name=pika)" ]; then
     read -r -p "There is an existing one, do you want to reinstall and reconfigure it? (yes/no): " confirm
     if [ "$confirm" == "yes" ]; then
         echo -e "\nStopping, please wait patiently..."
-        docker stop pika-nginx
-        docker stop pika-python
-        docker rm pika-nginx
-        docker rm pika-python
+        docker stop pika-nginx || true
+        docker stop pika-python || true
+        docker rm pika-nginx || true
+        docker rm pika-python || true
     else
         echo -e "Exiting...\n"
         exit 1
@@ -102,6 +103,14 @@ echo "SECRET_KEY=$(openssl rand -hex 64)" >> docker/backend/.env
 # Generate bearer_token
 TOKEN=$(openssl rand -hex 16)
 echo "BEARER_TOKEN=$TOKEN" >> docker/backend/.env
+
+
+# Mark the session cookie Secure when the base URL is HTTPS. setup.sh always deploys
+# same-origin, so SameSite stays on its "lax" default and only needs setting for a
+# cross-origin split (see backend/.env.example).
+if [[ "$baseurl" == https://* ]]; then
+    echo "SESSION_HTTPS_ONLY=true" >> docker/backend/.env
+fi
 
 
 # Copy dictionary

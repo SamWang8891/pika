@@ -9,8 +9,10 @@ Covers the two guarantees that make a server-side 307 safe:
 import os
 import sqlite3
 import tempfile
+import threading
 from http import HTTPStatus
 
+import init
 import record
 from init import make_urls
 
@@ -69,5 +71,60 @@ def demo():
     print("ok")
 
 
+def demo_dedup():
+    """A duplicated but otherwise-legal word must not crash startup."""
+    d = tempfile.mkdtemp()
+    txt = os.path.join(d, "dictionary.txt")
+    with open(txt, "w") as f:
+        f.write("apple\napple\npear\n")  # 'apple' twice, both legal
+
+    init.del_forbidden_word(txt)  # dedupes on rewrite...
+
+    db = os.path.join(d, "test.db")
+    with sqlite3.connect(db) as con:
+        cur = con.cursor()
+        init.load_dictionary(con.commit, cur, txt)  # ...and this must not raise on the PK
+        rows = cur.execute("SELECT word FROM dict ORDER BY word").fetchall()
+    assert rows == [("apple",), ("pear",)], rows
+
+    print("ok dedup")
+
+
+def demo_concurrent_alloc():
+    """Concurrent creates must never 500 on a UNIQUE collision, nor hand the same word twice."""
+    db = os.path.join(tempfile.mkdtemp(), "test.db")
+    record.dbfile = db
+    with sqlite3.connect(db) as con:
+        cur = con.cursor()
+        cur.execute("DROP TABLE IF EXISTS dict")
+        cur.execute("CREATE TABLE dict (word TEXT PRIMARY KEY, used INTEGER DEFAULT 0)")
+        cur.executemany("INSERT INTO dict (word) VALUES (?)", [("a",), ("b",), ("c",)])
+        make_urls(con.commit, cur)
+
+    results, lock = [], threading.Lock()
+
+    def worker(i):
+        try:
+            status, key, _ = record.create_record(f"https://example.com/{i}", expires_in="never")
+            out = (status, key, None)
+        except Exception as e:  # the whole point is to prove none escape as a 500
+            out = (None, None, repr(e))
+        with lock:
+            results.append(out)
+
+    threads = [threading.Thread(target=worker, args=(i,)) for i in range(5)]
+    for t in threads: t.start()
+    for t in threads: t.join()
+
+    assert not [r[2] for r in results if r[2]], [r[2] for r in results if r[2]]
+    keys = [r[1] for r in results if r[0] == HTTPStatus.OK]
+    assert len(keys) == len(set(keys)), keys  # no word allocated twice
+    assert sorted(keys) == ["a", "b", "c"], keys  # all three, cleanly exhausted
+
+    print("ok concurrent")
+
+
 if __name__ == "__main__":
     demo()
+    demo_dedup()
+    demo_concurrent_alloc()

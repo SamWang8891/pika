@@ -92,12 +92,12 @@ export async function adminCheck() {
   return { ok: res.ok, status: res.status };
 }
 
-export async function changePassword(newPass) {
+export async function changePassword(currentPass, newPass) {
   const base = await apiBase();
   const res = await fetch(`${base}/change_pass`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ new_pass: newPass }),
+    body: new URLSearchParams({ current_pass: currentPass, new_pass: newPass }),
     credentials: 'include',
   });
   const data = await res.json();

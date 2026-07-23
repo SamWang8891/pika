@@ -5,6 +5,7 @@ import { useToast } from '../components/Toast';
 import PasswordInput from '../components/PasswordInput';
 
 export default function ChangePassword() {
+  const [currentPass, setCurrentPass] = useState('');
   const [newPass, setNewPass] = useState('');
   const [confirmPass, setConfirmPass] = useState('');
   const [loading, setLoading] = useState(false);
@@ -29,7 +30,7 @@ export default function ChangePassword() {
 
   async function handleSubmit(e) {
     e.preventDefault();
-    if (!newPass || !confirmPass) {
+    if (!currentPass || !newPass || !confirmPass) {
       toast.warn('Please fill in all fields');
       return;
     }
@@ -41,12 +42,12 @@ export default function ChangePassword() {
     }
     setLoading(true);
     try {
-      const res = await changePassword(newPass);
+      const res = await changePassword(currentPass, newPass);
       if (res.ok) {
         toast.success(res.data.message || 'Password changed!');
         navigate('/login');
       } else if (res.status === 401) {
-        navigate('/login');
+        toast.error(res.data?.message || 'Current password is incorrect');
       } else {
         toast.error(res.data?.message || 'Failed to change password');
       }
@@ -54,6 +55,7 @@ export default function ChangePassword() {
       toast.error('Network error');
     } finally {
       setLoading(false);
+      setCurrentPass('');
       setNewPass('');
       setConfirmPass('');
     }
@@ -73,12 +75,20 @@ export default function ChangePassword() {
         <h2 style={{ marginBottom: 24, textAlign: 'center' }}>Change Password</h2>
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div>
+            <label className="input-label" htmlFor="current-pass">Current Password</label>
+            <PasswordInput
+              id="current-pass"
+              value={currentPass}
+              onChange={(e) => setCurrentPass(e.target.value)}
+              autoFocus
+            />
+          </div>
+          <div>
             <label className="input-label" htmlFor="new-pass">New Password</label>
             <PasswordInput
               id="new-pass"
               value={newPass}
               onChange={(e) => setNewPass(e.target.value)}
-              autoFocus
             />
           </div>
           <div>
