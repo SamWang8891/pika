@@ -4,7 +4,7 @@
 
 # Pika
 
-<img src="https://img.shields.io/badge/Version-v4.0.0-green">
+<img src="https://img.shields.io/badge/Version-v5.0.0-green">
 
 A very simple URL shortener that converts URLs into easy-to-remember English words for improved usability.
 
@@ -15,9 +15,11 @@ A very simple URL shortener that converts URLs into easy-to-remember English wor
 ---
 
 > [!IMPORTANT]
-> **v4.0.0 is the final release of the pure self-hosted Pika.**
-> Development after this release moves to Cloudflare Workers + D1.
-> This version remains fully installable and usable via `setup.sh`.
+> **v5 runs entirely on Cloudflare Workers + D1.** One Hono worker serves the React SPA, the
+> `/api/v4` API, and the short-link redirects; D1 is the database. The self-hosted
+> FastAPI + nginx + Docker stack ended with
+> [v4.0.0](https://github.com/SamWang8891/pika/releases), which remains available on the
+> release page.
 
 ---
 
@@ -27,16 +29,17 @@ A very simple URL shortener that converts URLs into easy-to-remember English wor
 - [Features ✨](#features-)
 - [Screenshots 📸](#screenshots-)
 - [Usage 🚀](#usage-)
-    - [Installation ⚙️](#installation-)
+    - [Deploying ⚙️](#deploying-)
     - [Redirect Behavior 🔀](#redirect-behavior-)
     - [Admin Panel 🛡](#admin-panel-)
-    - [Setting the Rate Limit 🕒](#setting-the-rate-limit-)
-    - [Changing the Default Port 🔌](#changing-the-default-port-)
+    - [Resetting the Admin Password 🔑](#resetting-the-admin-password-)
+    - [Rate Limiting 🕒](#rate-limiting-)
     - [Customizing the Dictionary 📚](#customizing-the-dictionary-)
-- [Build It Yourself 🛠](#build-it-yourself-)
+- [Development 🛠](#development-)
     - [File Structure 🗄](#file-structure-)
     - [Prerequisites ✅](#prerequisites-)
-    - [Building 🚧](#building-)
+    - [Running Locally 🚧](#running-locally-)
+    - [API Access for Scripts 🤖](#api-access-for-scripts-)
 - [Special Thanks 🙏](#special-thanks-)
 - [Notes 📝](#notes-)
     - [External Sources Used 💿](#external-sources-used-)
@@ -62,6 +65,7 @@ Found randomly generated URLs too hard to remember? This project offers another 
 - Apple mobile web app capability—add it to your home screen for a full-screen app-like experience.
 - Supports light and dark modes for a better user experience.
 - Fully customizable dictionary for randomized URL shortening.
+- Runs on Cloudflare's free tier — no server to maintain.
 
 ---
 
@@ -116,24 +120,38 @@ Found randomly generated URLs too hard to remember? This project offers another 
 
 ## Usage 🚀
 
-### Installation ⚙️
+### Deploying ⚙️
 
-1. Download the release ZIP file from the release page. To build it yourself, please refer
-   to [Build It Yourself](#build-it-yourself-).
-2. Unzip the file.
-3. Run the setup script:
+You need a Cloudflare account (the free tier works) and [pnpm](https://pnpm.io).
+
+1. Install dependencies and log in to Cloudflare:
    ```bash
-   bash setup.sh
-
-   # If Docker requires root permission
-   sudo bash setup.sh
+   pnpm install
+   pnpm wrangler login
    ```
-4. Follow the prompts to enter variables and parameters.
-5. You're all set!
+2. Create the D1 database and paste the `database_id` it prints into `wrangler.jsonc`:
+   ```bash
+   pnpm wrangler d1 create pika
+   ```
+3. Create the schema and seed the dictionary and admin account:
+   ```bash
+   pnpm db:migrate
+   ```
+4. Set the secrets:
+   ```bash
+   pnpm wrangler secret put SECRET_KEY    # e.g. openssl rand -hex 64
+   pnpm wrangler secret put BEARER_TOKEN  # e.g. openssl rand -hex 16
+   ```
+5. Deploy (`run` matters — plain `pnpm deploy` is a pnpm built-in, not this script):
+   ```bash
+   pnpm run deploy
+   ```
+6. You're all set! Add a [custom domain](https://developers.cloudflare.com/workers/configuration/routing/custom-domains/)
+   to the worker if you want your links on your own hostname.
 
 ### Redirect Behavior 🔀
 
-Shortened links are resolved by the server and answered with an HTTP `307 Temporary Redirect`. No page is
+Shortened links are resolved by the worker and answered with an HTTP `307 Temporary Redirect`. No page is
 rendered in between, so a link works anywhere an HTTP client does:
 
 ```bash
@@ -164,105 +182,61 @@ password: password
 
 Remember to change the password after the first login.
 
-### Setting the Rate Limit 🕒
+### Resetting the Admin Password 🔑
 
-The rate limit is set in nginx.
-Default setting allows 10 requests per second per IP address, with a burst of 10.
-You can modify the limit in
-`docker/nginx/default.conf`.
+Forgot the password? Reset it back to `password` (the `\$` escapes matter — the hash contains `$`):
 
-### Changing the Default Port 🔌
+```bash
+pnpm wrangler d1 execute pika --remote --command "UPDATE login SET password='pbkdf2\$100000\$I/3PIRTUbXeLEOYhShbQrw==\$gT/GEuB1CrPa7URCcXVcOa8Pis48gWlA5yeq94SoLjQ=' WHERE username='admin'"
+```
 
-`setup.sh` asks for the exposed nginx port and writes it to `.env` as
-`WEB_EXPOSED_PORT`, which `docker-compose.yaml` maps to the container's port 80.
-To change it later, edit `WEB_EXPOSED_PORT` in `.env` and run `docker compose up -d`.
+### Rate Limiting 🕒
+
+The worker itself does not rate-limit (the old nginx 10 r/s rule is gone). If you need one, add a
+[Cloudflare WAF rate limiting rule](https://developers.cloudflare.com/waf/rate-limiting-rules/) on your zone —
+it runs in front of the worker and is configurable per path.
 
 ### Customizing the Dictionary 📚
 
-Customize the dictionary by editing the `dictionary.txt` file **before** installation.
-
-To refresh the dictionary,
-run the setup script again.
-Please note that by doing so, you will lose all existing data.
+Random keywords come from the word pool in `migrations/0002_seed_dictionary.sql`. Edit it **before** running
+`pnpm db:migrate`. Words must be alphanumeric (`A-Za-z0-9`).
 
 **Reserved Words:**
 Avoid using the following reserved words:
-`login`, `admin`, `logout`, `api`, `index`, `index.html`, `change_pass`. These will be removed during setup without
-notice.
+`login`, `admin`, `logout`, `api`, `index`, `index.html`, `change_pass`. They can never be claimed as keywords.
 
 ---
 
-## Build It Yourself 🛠
+## Development 🛠
 
 ### File Structure 🗄
 
-#### Source Code 🧑‍💻
-
-- **Frontend:** Built using Vite, located in the `frontend` folder.
-- **Backend:** Built using Python FastAPI, located in the `backend` folder.
-
-#### Docker 🐳
-
-- `docker/frontend`: Contains built frontend files.
-- `docker/backend`: Contains Python backend files.
-- `docker/nginx`: Contains Nginx `default.conf`.
+- `src/client`: React SPA (Vite, TypeScript) — pages, components, theme, API client.
+- `src/server`: The Hono worker — `/api/v4`, short-link redirects, SPA asset serving.
+- `src/shared`: Types and constants shared by both.
+- `migrations`: D1 schema and dictionary seed.
 
 ### Prerequisites ✅
 
-1. Node.js >= 22.20.0
-2. Python >= 3.14.2
+1. Node.js >= 22
+2. pnpm
 
-### Building 🚧
+### Running Locally 🚧
 
-#### Frontend 🌐
+```bash
+pnpm install
+pnpm db:migrate:local   # local D1 in .wrangler/
+pnpm dev                # Vite dev server with the worker and local D1
+```
 
-1. Navigate to the `frontend` folder.
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. (Optional) Modify the code as you wish.
-4. (Optional) Vite can be executed in development mode:
-   ```bash
-   npm run dev
-   ```
-5. Build the frontend:
-   ```bash
-   npm run build
-   ```
-6. Copy the `dist` folder to `docker/` and rename it to `frontend`.
+Local secrets live in `.dev.vars` (copy `.dev.vars.example`). `pnpm check` type-checks and builds;
+`pnpm preview` serves the production build locally.
 
-#### Backend 👨‍🔧
+### API Access for Scripts 🤖
 
-The FastAPI documentation is in https://example.com/api/v4/docs.
-
-The authentication token is there to bypass the cookie for easy developing, so you only need either cookie or
-authentication token to access the locked part of API in the documentation.
-
-The token is stored in the `docker/backend/.env` file.
-
-If you want to modify the backend, follow these steps. Otherwise, copy the `backend` folder to `docker/` and
-rename it to `backend`.
-
-1. Navigate to the `backend` folder.
-2. (Optional, take venv for example) Create a virtual environment:
-   ```bash
-   python -m venv venv
-   ```
-3. (Skip if not using a virtual environment) Activate the virtual environment:
-   ```bash
-    source venv/bin/activate
-    ```
-4. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-5. Modify the code as you wish.
-6. Run the backend in development mode:
-   ```bash
-   python app.py
-   ```
-7. After modifying the backend, copy the `backend` folder to `docker/` and rename it to `backend`.
+The authenticated API endpoints (`change_pass`, `delete_record`, `get_all_records`, `delete_all_records`)
+accept `Authorization: Bearer <BEARER_TOKEN>` in place of the session cookie, so scripts don't need to log
+in. The bearer token also skips the current-password check on `change_pass`.
 
 ---
 
