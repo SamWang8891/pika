@@ -1,12 +1,12 @@
 [project]
 name = "backend"
-version = "3.0.0"
+version = "4.0.0"
 description = "Backend for Pika URL Shortener"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
     "argon2-cffi>=25.1.0",
-    "dotenv>=0.9.9",
+    "python-dotenv>=1.0.1",
     "fastapi>=0.127.0",
     "itsdangerous>=2.2.0",
     "python-multipart>=0.0.21",

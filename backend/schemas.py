@@ -7,16 +7,16 @@ class StatusResponse(BaseModel):
 
 
 class ShortenedSchemas(BaseModel):
-    shortened_key: str
+    shortened_key: str | None
 
 
 class ShortenedResponse(BaseModel):
     message: str
-    data: ShortenedSchemas
+    data: ShortenedSchemas | None
 
 
 class SearchSchemas(BaseModel):
-    original_url: str
+    original_url: str | None
 
 
 class SearchResponse(BaseModel):

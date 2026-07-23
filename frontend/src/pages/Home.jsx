@@ -54,7 +54,7 @@ export default function Home() {
       toast.error('URL must not contain spaces');
       return;
     }
-    if (keyword && /[^a-zA-Z0-9]/.test(keyword)) {
+    if (keyword.trim() && /[^a-zA-Z0-9]/.test(keyword.trim())) {
       toast.error('Custom keyword can only contain letters and numbers');
       return;
     }
@@ -95,11 +95,28 @@ export default function Home() {
     toast.success('QR code generated!');
   }
 
-  function handleCopy() {
+  async function handleCopy() {
     const text = result.shortenedUrl || result.originalUrl;
-    navigator.clipboard.writeText(text)
-      .then(() => toast.success('Copied to clipboard!'))
-      .catch(() => toast.error('Copy failed. Please copy manually.'));
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        // navigator.clipboard is undefined on non-secure origins (plain HTTP/LAN),
+        // where accessing it directly would throw before any .catch could fire.
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        const ok = document.execCommand('copy');
+        document.body.removeChild(ta);
+        if (!ok) throw new Error('copy command failed');
+      }
+      toast.success('Copied to clipboard!');
+    } catch {
+      toast.error('Copy failed. Please copy manually.');
+    }
   }
 
   return (

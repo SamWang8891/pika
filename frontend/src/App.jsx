@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import Home from './pages/Home';
 import Admin from './pages/Admin';
@@ -17,6 +17,9 @@ export default function App() {
         <Route path="/logout" element={<Logout />} />
         <Route path="/change_pass" element={<ChangePassword />} />
         <Route path="/:shortKey" element={<Redirect />} />
+        {/* Multi-segment unknown paths don't match /:shortKey — send them home
+            instead of rendering a blank page. */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>
   );
