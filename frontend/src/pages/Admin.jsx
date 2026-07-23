@@ -31,18 +31,25 @@ export default function Admin() {
 
   useEffect(() => {
     (async () => {
-      const authRes = await adminCheck();
-      if (!authRes.ok) {
+      try {
+        const authRes = await adminCheck();
+        if (!authRes.ok) {
+          navigate('/login');
+          return;
+        }
+        const host = await getWebHostname();
+        setWebHost(host);
+        await fetchRecords();
+      } catch {
+        // conf.yaml failed to load or the network dropped — don't strand the page
+        // on the loading spinner forever; send the user to login to retry.
         navigate('/login');
-        return;
       }
-      const host = await getWebHostname();
-      setWebHost(host);
-      await fetchRecords();
     })();
   }, [navigate, fetchRecords]);
 
   async function handleDelete(shortKey) {
+    if (deleting) return; // one delete in flight at a time
     setDeleting(shortKey);
     try {
       const stripped = removeBaseUrl(shortKey, webHost);

@@ -3,6 +3,8 @@ services:
   nginx:
     container_name: pika-nginx
     image: nginx:latest
+    depends_on:
+      - python-app
     volumes:
       - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
       - ./docker/frontend:/web

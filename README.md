@@ -8,7 +8,7 @@
 
 A very simple URL shortener that converts URLs into easy-to-remember English words for improved usability.
 
-[台灣繁體中文 請按這](README.zh-TW.md)
+[台灣繁體中文 請按這](README.zh-tw.md)
 
 </div>
 
@@ -170,6 +170,12 @@ The rate limit is set in nginx.
 Default setting allows 10 requests per second per IP address, with a burst of 10.
 You can modify the limit in
 `docker/nginx/default.conf`.
+
+### Changing the Default Port 🔌
+
+`setup.sh` asks for the exposed nginx port and writes it to `.env` as
+`WEB_EXPOSED_PORT`, which `docker-compose.yaml` maps to the container's port 80.
+To change it later, edit `WEB_EXPOSED_PORT` in `.env` and run `docker compose up -d`.
 
 ### Customizing the Dictionary 📚
 

@@ -163,6 +163,10 @@ irm https://example.com/apple | iex
 
 速率限制設定在 nginx。預設允許每個 IP 每秒 10 次請求，突發上限為 10。可以在 `docker/nginx/default.conf` 中修改限制。
 
+### 修改預設連接埠 🔌
+
+`setup.sh` 會詢問 nginx 對外開放的連接埠，並將其寫入 `.env` 的 `WEB_EXPOSED_PORT`，`docker-compose.yaml` 再將它對應到容器的 80 埠。若之後要修改，請編輯 `.env` 中的 `WEB_EXPOSED_PORT`，然後執行 `docker compose up -d`。
+
 ### 客製化字典 📚
 
 在安裝之前，可通過編輯 `dictionary.txt` 檔案來客製化字典。

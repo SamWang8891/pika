@@ -63,11 +63,17 @@ def create_record(original_url: str, custom_keyword: str = "", expires_in: str =
                 cur.execute("UPDATE dict SET used = 1 WHERE word = ?", (custom_keyword,))
 
             # Create a record with that keyword
-            cur.execute(
-                "INSERT INTO urls (orig, short, created_at, expires_at) VALUES (?, ?, datetime('now'), ?)",
-                (original_url, custom_keyword, expires_at)
-            )
-            con.commit()
+            try:
+                cur.execute(
+                    "INSERT INTO urls (orig, short, created_at, expires_at) VALUES (?, ?, datetime('now'), ?)",
+                    (original_url, custom_keyword, expires_at)
+                )
+                con.commit()
+            except sqlite3.IntegrityError:
+                # A concurrent request claimed this keyword between our check and insert
+                # (urls.short is UNIQUE). Report it as occupied rather than a 500.
+                con.rollback()
+                return HTTPStatus.CONFLICT, None, "Keyword is occupied!"
 
             return HTTPStatus.OK, custom_keyword, "Custom record created!"
         else:
@@ -80,20 +86,28 @@ def create_record(original_url: str, custom_keyword: str = "", expires_in: str =
             if result and (existing_short_key := result[0]):
                 return HTTPStatus.OK, existing_short_key, "Existing record found!"
 
-            cur.execute("SELECT word FROM dict WHERE used = 0 ORDER BY RANDOM() LIMIT 1")
-            row = cur.fetchone()
-            if not row:
-                return HTTPStatus.SERVICE_UNAVAILABLE, None, "No available words left in the dictionary!"
+            # Claim an unused word, retrying if a concurrent request grabs the same one
+            # first — urls.short is UNIQUE, so the loser's INSERT would otherwise 500.
+            for _ in range(5):
+                cur.execute("SELECT word FROM dict WHERE used = 0 ORDER BY RANDOM() LIMIT 1")
+                row = cur.fetchone()
+                if not row:
+                    return HTTPStatus.SERVICE_UNAVAILABLE, None, "No available words left in the dictionary!"
 
-            shortened_key = row[0]
+                shortened_key = row[0]
+                cur.execute("UPDATE dict SET used = 1 WHERE word = ?", (shortened_key,))
+                try:
+                    cur.execute(
+                        "INSERT INTO urls (orig, short, created_at, expires_at) VALUES (?, ?, datetime('now'), ?)",
+                        (original_url, shortened_key, expires_at)
+                    )
+                    con.commit()
+                    return HTTPStatus.OK, shortened_key, "Record created!"
+                except sqlite3.IntegrityError:
+                    # Another request took this word first; roll back the claim and re-pick.
+                    con.rollback()
 
-            cur.execute("UPDATE dict SET used = 1 WHERE word = ?", (shortened_key,))
-            cur.execute(
-                "INSERT INTO urls (orig, short, created_at, expires_at) VALUES (?, ?, datetime('now'), ?)",
-                (original_url, shortened_key, expires_at)
-            )
-            con.commit()
-            return HTTPStatus.OK, shortened_key, "Record created!"
+            return HTTPStatus.SERVICE_UNAVAILABLE, None, "Could not allocate a key, please retry."
 
 
 def _calc_expires_at(expires_in: str) -> str | None:

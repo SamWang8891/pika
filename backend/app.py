@@ -1,3 +1,4 @@
+import hmac
 import inspect
 import os
 import sqlite3
@@ -32,6 +33,11 @@ ALLOWED_ORIGINS = os.getenv('ALLOWED_ORIGINS', '')
 origins = [origin.strip() for origin in ALLOWED_ORIGINS.split(",") if origin.strip()]
 SECRET_KEY = os.getenv('SECRET_KEY')
 BEARER_TOKEN = os.getenv('BEARER_TOKEN')
+# Session cookie flags. Same-origin deployments (the nginx default) are fine on the
+# defaults; set both when frontend and backend live on different HTTPS origins, since
+# a cross-site cookie needs SameSite=none + Secure or the browser drops it.
+SESSION_HTTPS_ONLY = os.getenv('SESSION_HTTPS_ONLY', 'false').lower() == 'true'
+SESSION_SAME_SITE = os.getenv('SESSION_SAME_SITE', 'lax')
 
 if not SECRET_KEY:
     raise RuntimeError("SECRET_KEY must be set in the environment")
@@ -59,6 +65,8 @@ app.add_middleware(
     SessionMiddleware,
     secret_key=SECRET_KEY,
     max_age=1800,  # In seconds
+    https_only=SESSION_HTTPS_ONLY,
+    same_site=SESSION_SAME_SITE,
 )
 
 app.add_middleware(
@@ -76,7 +84,8 @@ bearer_scheme = HTTPBearer(auto_error=False)
 async def verify_bearer_token(
         credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)
 ):
-    if credentials and credentials.scheme == "Bearer" and credentials.credentials == BEARER_TOKEN:
+    if credentials and credentials.scheme == "Bearer" and hmac.compare_digest(
+            credentials.credentials.encode(), BEARER_TOKEN.encode()):
         return True
     else:
         return False
@@ -125,7 +134,7 @@ def logout_route(request: Request):
     description="Login with username and password.",
     tags=["Authentication"],
 )
-async def login_route(request: Request, username: str = Form(...), password: str = Form(...)):
+def login_route(request: Request, username: str = Form(...), password: str = Form(...)):
     if not is_permitted(username, password):
         request.session.pop("user", None)
         return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={
@@ -169,9 +178,10 @@ async def check_user_route(request: Request):
     description="Change admin password with new password.",
     tags=["Authentication"],
 )
-async def change_pass_route(
+def change_pass_route(
         request: Request,
         new_pass: str = Form(..., description="The new password"),
+        current_pass: str = Form("", description="The current password (required for session auth)"),
         bypass: bool = Depends(verify_bearer_token),
 ):
     session_data = request.session.get("user", {"permitted": False})
@@ -179,6 +189,14 @@ async def change_pass_route(
     if not (bypass or session_data.get("permitted")):
         return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={
             "message": "Unauthorized",
+            "data": None,
+        })
+
+    # A session alone isn't enough to change the password: a hijacked/leaked cookie
+    # must still know the current password. The bearer token (server-side admin) bypasses.
+    if not bypass and not is_permitted("admin", current_pass):
+        return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={
+            "message": "Current password is incorrect.",
             "data": None,
         })
 
@@ -196,7 +214,7 @@ async def change_pass_route(
     description="Create a shortened URL record with the given URL. Note that the URL must comes with protocol.",
     tags=["Record"],
 )
-async def create_record_route(
+def create_record_route(
         url: str = Form(..., description="URL to shorten", examples=[""]),
         custom_keyword: str = Form("", description="Custom keyword", examples=[""]),
         expires_in: str = Form("7d", description="Expiration preset: 1h, 12h, 1d, 7d, never", examples=["7d"]),
@@ -215,16 +233,16 @@ async def create_record_route(
     response_model=StatusResponse,
     summary="Delete a record",
     description=inspect.cleandoc("""
-        Delete a shortened URL record with\n
-            1) The shortened part without base-URL\n
-            2) The full shortened URL with protocol\n
-            3) The full shortened URl without protocol\n
-            4) The original URL without protocol (will fill-in with https://)\n
-            ) The original URL with protocol\n
+        Delete a shortened URL record, identified by any of:\n
+            1) The short key on its own (e.g. "apple")\n
+            2) The original URL with protocol\n
+            3) The original URL without protocol (https:// is assumed)\n
+        The full shortened URL (base + key) is not accepted here — the frontend strips the
+        base to the short key before calling this endpoint.
         """),
     tags=["Record"],
 )
-async def delete_record_route(
+def delete_record_route(
         request: Request,
         url: str = Form(..., description="URL to put in search to be deleted"),
         bypass: bool = Depends(verify_bearer_token),
@@ -250,7 +268,7 @@ async def delete_record_route(
     description="Search for a record using the shortened part (without base-URL) of the shortened URL.",
     tags=["Record"],
 )
-async def search_record_route(
+def search_record_route(
         short_key: str = Query(..., description="Short key to search", examples=[""]),
 ):
     status, message, result = search_for_redirect(short_key)

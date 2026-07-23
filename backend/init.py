@@ -27,8 +27,10 @@ def load_dictionary(commit: Callable, cur: Cursor, text_file: str):
 
     for word in words:
         w = word.strip()
+        # OR IGNORE so a duplicate line can't crash startup on the word PRIMARY KEY;
+        # del_forbidden_word also dedupes, this is the belt-and-suspenders.
         cur.execute('''
-                    INSERT INTO dict (word)
+                    INSERT OR IGNORE INTO dict (word)
                     VALUES (?)
                     ''', (w,))
 
@@ -112,18 +114,21 @@ def del_forbidden_word(textfile: str):
     :return: None
     """
 
-    legal: bool = True
+    needs_rewrite: bool = False
 
     words = set()
     with open(textfile, 'r') as file:
         for line in file:
             line = line.strip()
             if (line in forbidden) or (re.match(r"^[A-Za-z0-9]*$", line) is None):
-                legal = False
+                needs_rewrite = True  # illegal line: drop it
+                continue
+            if line in words:
+                needs_rewrite = True  # duplicate: dedupe on rewrite
                 continue
 
             words.add(line)
 
-    if not legal:
+    if needs_rewrite:
         with open(textfile, 'w') as file:
-            file.write('\n'.join(words))
+            file.write('\n'.join(sorted(words)))
