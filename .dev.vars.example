@@ -1,0 +1,5 @@
+# Copy to .dev.vars for local dev; for production run:
+#   wrangler secret put SECRET_KEY    (openssl rand -hex 64)
+#   wrangler secret put BEARER_TOKEN  (openssl rand -hex 16)
+SECRET_KEY=replace-me
+BEARER_TOKEN=replace-me

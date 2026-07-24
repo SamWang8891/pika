@@ -1,8 +1,31 @@
 # AI Tools
 .claude/settings.local.json
 
-# Logs
-logs
+# prod
+dist/
+dist-server/
+
+# dev
+.yarn/
+!.yarn/releases
+.vscode/*
+!.vscode/launch.json
+!.vscode/*.code-snippets
+.idea/workspace.xml
+.idea/usage.statistics.xml
+.idea/shelf
+
+# deps
+node_modules/
+.wrangler
+
+# env
+.env
+.env.production
+.dev.vars
+
+# logs
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -10,44 +33,11 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-# Build files
-web-source/node_modules
-dist
-dist-ssr
-*.local
-*.sqlite
-node_modules
-
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
+# misc
 .DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-*.imi
-backend/*.iml
-frontend/*.iml
 
-# User generated
-__pycache__
-.env
-*.db
-frontend/conf.yaml
-backend/dictionary.txt
-backend/is_reset_password.txt
-backend/.env
-docker/backend/
-docker/frontend/
-token.txt
+# generated
+*.tsbuildinfo
 
-# Dev
-to-do.txt
-.venv
-*-debug.*
-backend/is_running.txt
-backend/.python-version
-frontend/.vite/
+# IDE
+.idea/

@@ -4,7 +4,7 @@
 
 # Pika
 
-<img src="https://img.shields.io/badge/Version-v4.0.0-green">
+<img src="https://img.shields.io/badge/Version-v5.0.0-green">
 
 A very simple URL shortener that converts URLs into easy-to-remember English words for improved usability.
 
@@ -15,9 +15,11 @@ A very simple URL shortener that converts URLs into easy-to-remember English wor
 ---
 
 > [!IMPORTANT]
-> **v4.0.0 is the final release of the pure self-hosted Pika.**
-> Development after this release moves to Cloudflare Workers + D1.
-> This version remains fully installable and usable via `setup.sh`.
+> **v5 runs entirely on Cloudflare Workers + D1.** One Hono worker serves the React SPA, the
+> `/api/v4` API, and the short-link redirects; D1 is the database. The self-hosted
+> FastAPI + nginx + Docker stack ended with
+> [v4.0.0](https://github.com/SamWang8891/pika/releases), which remains available on the
+> release page.
 
 ---
 
@@ -27,16 +29,18 @@ A very simple URL shortener that converts URLs into easy-to-remember English wor
 - [Features ✨](#features-)
 - [Screenshots 📸](#screenshots-)
 - [Usage 🚀](#usage-)
-    - [Installation ⚙️](#installation-)
+    - [Deploying ⚙️](#deploying-)
     - [Redirect Behavior 🔀](#redirect-behavior-)
+    - [Random Strings 🎲](#random-strings-)
     - [Admin Panel 🛡](#admin-panel-)
-    - [Setting the Rate Limit 🕒](#setting-the-rate-limit-)
-    - [Changing the Default Port 🔌](#changing-the-default-port-)
+    - [Resetting the Admin Password 🔑](#resetting-the-admin-password-)
+    - [Rate Limiting 🕒](#rate-limiting-)
     - [Customizing the Dictionary 📚](#customizing-the-dictionary-)
-- [Build It Yourself 🛠](#build-it-yourself-)
+- [Development 🛠](#development-)
     - [File Structure 🗄](#file-structure-)
     - [Prerequisites ✅](#prerequisites-)
-    - [Building 🚧](#building-)
+    - [Running Locally 🚧](#running-locally-)
+    - [API Access for Scripts 🤖](#api-access-for-scripts-)
 - [Special Thanks 🙏](#special-thanks-)
 - [Notes 📝](#notes-)
     - [External Sources Used 💿](#external-sources-used-)
@@ -57,11 +61,14 @@ Found randomly generated URLs too hard to remember? This project offers another 
 
 - Generates user-friendly shortened URLs like [https://example.com/apple](https://google.com).
 - Shortened URLs can also be customized.
+- Prefer opaque links? A second button shortens with a short random string (4+ lowercase characters) instead
+  of a dictionary word.
 - Resolved server-side as an HTTP `307`, so links work in browsers *and* in command-line tools such as
   `curl` or PowerShell's `irm`.
 - Apple mobile web app capability—add it to your home screen for a full-screen app-like experience.
 - Supports light and dark modes for a better user experience.
 - Fully customizable dictionary for randomized URL shortening.
+- Runs on Cloudflare's free tier — no server to maintain.
 
 ---
 
@@ -116,24 +123,47 @@ Found randomly generated URLs too hard to remember? This project offers another 
 
 ## Usage 🚀
 
-### Installation ⚙️
+### Deploying ⚙️
 
-1. Download the release ZIP file from the release page. To build it yourself, please refer
-   to [Build It Yourself](#build-it-yourself-).
-2. Unzip the file.
-3. Run the setup script:
+You need a Cloudflare account (the free tier works) and [pnpm](https://pnpm.io).
+
+1. Install dependencies and log in to Cloudflare:
    ```bash
-   bash setup.sh
-
-   # If Docker requires root permission
-   sudo bash setup.sh
+   pnpm install
+   pnpm wrangler login
    ```
-4. Follow the prompts to enter variables and parameters.
-5. You're all set!
+2. Create the D1 database and paste the `database_id` it prints into `wrangler.jsonc`:
+   ```bash
+   pnpm wrangler d1 create pika
+   ```
+3. Create the schema and seed the dictionary and admin account:
+   ```bash
+   pnpm db:migrate
+   ```
+   The `admin` account is seeded with **no usable password** — nobody can log in
+   until you set one in step 6.
+4. Set the secrets (the worker returns `500` on `/api/v4/*` until both are set):
+   ```bash
+   pnpm wrangler secret put SECRET_KEY    # e.g. openssl rand -hex 64
+   pnpm wrangler secret put BEARER_TOKEN  # e.g. openssl rand -hex 16
+   ```
+5. Deploy (`run` matters — plain `pnpm deploy` is a pnpm built-in, not this script):
+   ```bash
+   pnpm run deploy
+   ```
+6. Set the admin password using the bearer token (min 8 characters):
+   ```bash
+   curl -X POST https://<your-worker-url>/api/v4/change_pass \
+     -H "Authorization: Bearer <BEARER_TOKEN>" \
+     -H "Content-Type: application/json" \
+     -d '{"new_pass":"your-strong-password"}'
+   ```
+7. You're all set! Add a [custom domain](https://developers.cloudflare.com/workers/configuration/routing/custom-domains/)
+   to the worker if you want your links on your own hostname.
 
 ### Redirect Behavior 🔀
 
-Shortened links are resolved by the server and answered with an HTTP `307 Temporary Redirect`. No page is
+Shortened links are resolved by the worker and answered with an HTTP `307 Temporary Redirect`. No page is
 rendered in between, so a link works anywhere an HTTP client does:
 
 ```bash
@@ -151,118 +181,93 @@ visitors to the old destination.
 > ⚠️ Piping a shortened link into a shell runs whatever that record currently points at, and anyone with
 > admin access can repoint it. Only do this with links you control.
 
+### Random Strings 🎲
+
+Don't want a dictionary word? **Shorten with random string** on the home page asks the server for an opaque
+alphanumeric key instead. How it's allocated, server-side:
+
+- Keys are **all lowercase** (`a-z0-9`) and start at **4 characters** (~1.7M combinations) — no case to
+  guess when typing one out.
+- A key is claimed by inserting it directly — the database's `UNIQUE` constraint is the collision check, so
+  two concurrent requests can never get the same key.
+- After **10 collisions in a row** the length grows by one character and it tries again.
+- Random-string mode always mints a fresh key: shortening the same URL twice gives two different links
+  (unlike dictionary mode, which returns the existing one).
+
+The same thing over the API — `random_string: true` on `create_record`:
+
+```bash
+curl -X POST https://example.com/api/v4/create_record \
+  -H 'content-type: application/json' \
+  -d '{"url":"https://example.com/very-long-url","random_string":true,"expires_in":"7d"}'
+```
+
 ### Admin Panel 🛡
 
 Access the admin panel at: `https://example.com/admin`
 
-Default admin account:
+The username is `admin`; set the password during deploy (step 6) with a bearer-token
+call to `/api/v4/change_pass`. There is no default password.
 
-```plaintext
-username: admin
-password: password
+### Resetting the Admin Password 🔑
+
+Forgot the password? Clear it, then set a new one via the bearer token (as in deploy step 6).
+An empty stored value fails the password check, so no one can log in in the meantime:
+
+```bash
+pnpm wrangler d1 execute pika --remote --command "UPDATE login SET password='' WHERE username='admin'"
 ```
 
-Remember to change the password after the first login.
+### Rate Limiting 🕒
 
-### Setting the Rate Limit 🕒
-
-The rate limit is set in nginx.
-Default setting allows 10 requests per second per IP address, with a burst of 10.
-You can modify the limit in
-`docker/nginx/default.conf`.
-
-### Changing the Default Port 🔌
-
-`setup.sh` asks for the exposed nginx port and writes it to `.env` as
-`WEB_EXPOSED_PORT`, which `docker-compose.yaml` maps to the container's port 80.
-To change it later, edit `WEB_EXPOSED_PORT` in `.env` and run `docker compose up -d`.
+The worker itself does not rate-limit (the old nginx 10 r/s rule is gone). If your instance is
+public, add a [Cloudflare WAF rate limiting rule](https://developers.cloudflare.com/waf/rate-limiting-rules/)
+on your zone — e.g. 5 requests/minute per IP on `POST /api/v4/login` to throttle brute-force, plus a
+looser cap on `/api/v4/create_record` if you leave shortening unauthenticated.
 
 ### Customizing the Dictionary 📚
 
-Customize the dictionary by editing the `dictionary.txt` file **before** installation.
-
-To refresh the dictionary,
-run the setup script again.
-Please note that by doing so, you will lose all existing data.
+Random keywords come from the word pool in `migrations/0002_seed_dictionary.sql`. Edit it **before** running
+`pnpm db:migrate`. Words must be alphanumeric (`A-Za-z0-9`).
 
 **Reserved Words:**
 Avoid using the following reserved words:
-`login`, `admin`, `logout`, `api`, `index`, `index.html`, `change_pass`. These will be removed during setup without
-notice.
+`login`, `admin`, `logout`, `api`, `index`, `index.html`, `change_pass`. They can never be claimed as keywords.
 
 ---
 
-## Build It Yourself 🛠
+## Development 🛠
 
 ### File Structure 🗄
 
-#### Source Code 🧑‍💻
-
-- **Frontend:** Built using Vite, located in the `frontend` folder.
-- **Backend:** Built using Python FastAPI, located in the `backend` folder.
-
-#### Docker 🐳
-
-- `docker/frontend`: Contains built frontend files.
-- `docker/backend`: Contains Python backend files.
-- `docker/nginx`: Contains Nginx `default.conf`.
+- `src/client`: React SPA (Vite, TypeScript) — pages, components, theme, API client.
+- `src/server`: The Hono worker — `/api/v4`, short-link redirects, SPA asset serving.
+- `src/shared`: Types and constants shared by both.
+- `migrations`: D1 schema and dictionary seed.
 
 ### Prerequisites ✅
 
-1. Node.js >= 22.20.0
-2. Python >= 3.14.2
+1. Node.js >= 22
+2. pnpm
 
-### Building 🚧
+### Running Locally 🚧
 
-#### Frontend 🌐
+```bash
+pnpm install
+pnpm db:migrate:local   # local D1 in .wrangler/
+pnpm dev                # Vite dev server with the worker and local D1
+```
 
-1. Navigate to the `frontend` folder.
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. (Optional) Modify the code as you wish.
-4. (Optional) Vite can be executed in development mode:
-   ```bash
-   npm run dev
-   ```
-5. Build the frontend:
-   ```bash
-   npm run build
-   ```
-6. Copy the `dist` folder to `docker/` and rename it to `frontend`.
+Local secrets live in `.dev.vars` (copy `.dev.vars.example`). `pnpm check` type-checks and builds;
+`pnpm preview` serves the production build locally.
 
-#### Backend 👨‍🔧
+### API Access for Scripts 🤖
 
-The FastAPI documentation is in https://example.com/api/v4/docs.
-
-The authentication token is there to bypass the cookie for easy developing, so you only need either cookie or
-authentication token to access the locked part of API in the documentation.
-
-The token is stored in the `docker/backend/.env` file.
-
-If you want to modify the backend, follow these steps. Otherwise, copy the `backend` folder to `docker/` and
-rename it to `backend`.
-
-1. Navigate to the `backend` folder.
-2. (Optional, take venv for example) Create a virtual environment:
-   ```bash
-   python -m venv venv
-   ```
-3. (Skip if not using a virtual environment) Activate the virtual environment:
-   ```bash
-    source venv/bin/activate
-    ```
-4. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-5. Modify the code as you wish.
-6. Run the backend in development mode:
-   ```bash
-   python app.py
-   ```
-7. After modifying the backend, copy the `backend` folder to `docker/` and rename it to `backend`.
+The authenticated API endpoints (`change_pass`, `delete_record`, `get_all_records`, `delete_all_records`)
+accept `Authorization: Bearer <BEARER_TOKEN>` in place of the session cookie, so scripts don't need to log
+in. The bearer token also skips the current-password check on `change_pass`; a **session-authenticated**
+`change_pass` must include the correct `current_pass`. New passwords must be at least 8 characters, and
+changing the password invalidates all existing sessions.
 
 ---
 
