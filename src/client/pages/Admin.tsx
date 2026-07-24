@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { CSSProperties, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { adminCheck, getAllRecords, deleteRecord, deleteAllRecords } from '../api';
+import { adminCheck, getAllRecords, deleteRecord, deleteRecordByShort, deleteAllRecords } from '../api';
 import { useToast } from '../components/Toast';
 import type { UrlRecord } from '../../shared/types';
 
@@ -47,12 +47,11 @@ export default function Admin() {
     })();
   }, [navigate, fetchRecords]);
 
-  async function handleDelete(shortKey: string) {
+  async function runDelete(key: string, doDelete: () => ReturnType<typeof deleteRecord>) {
     if (deleting) return; // one delete in flight at a time
-    setDeleting(shortKey);
+    setDeleting(key);
     try {
-      const stripped = removeBaseUrl(shortKey);
-      const res = await deleteRecord(stripped);
+      const res = await doDelete();
       if (res.status === 401) { navigate('/login'); return; }
       if (res.status === 300) { toast.warn('Multiple records found. Be more specific.'); }
       else if (res.status === 404) { toast.error('Record not found'); }
@@ -65,11 +64,16 @@ export default function Admin() {
     }
   }
 
+  // Row buttons delete the exact record by its short key (no fuzzy matching, so a
+  // key that collides with some other record's original URL can't misfire).
+  const handleRowDelete = (short: string) => runDelete(short, () => deleteRecordByShort(short));
+
   async function handleSearchDelete(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const val = deleteInput.trim();
     if (!val) return;
-    await handleDelete(val);
+    // The free-text box keeps the fuzzy match (full URL, short key, or original URL).
+    await runDelete(val, () => deleteRecord(removeBaseUrl(val)));
     setDeleteInput('');
   }
 
@@ -198,7 +202,7 @@ export default function Admin() {
                       <button
                         className="btn btn-danger"
                         style={{ padding: '5px 12px', fontSize: '0.78rem' }}
-                        onClick={() => handleDelete(r.short)}
+                        onClick={() => handleRowDelete(r.short)}
                         disabled={deleting === r.short}
                       >
                         {deleting === r.short ? '...' : 'Delete'}

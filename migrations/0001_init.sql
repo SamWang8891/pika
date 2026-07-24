@@ -23,6 +23,7 @@ CREATE INDEX idx_urls_orig ON urls(orig);
 CREATE INDEX idx_urls_expires ON urls(expires_at) WHERE expires_at IS NOT NULL;
 CREATE INDEX idx_dict_free ON dict(word) WHERE used = 0;
 
--- Default credentials: admin / password (change after first login)
-INSERT INTO login (username, password) VALUES
-('admin', 'pbkdf2$100000$I/3PIRTUbXeLEOYhShbQrw==$gT/GEuB1CrPa7URCcXVcOa8Pis48gWlA5yeq94SoLjQ=');
+-- No usable default password: '' fails verifyPassword (scheme check), so nobody can
+-- log in until the operator sets one via a bearer-token POST /api/v4/change_pass.
+-- (Do not use NULL — verifyPassword does stored.split('$') and would throw on null.)
+INSERT INTO login (username, password) VALUES ('admin', '');

@@ -13,7 +13,9 @@ export interface ApiResult<T = null> {
 
 async function request<T = null>(path: string, init?: RequestInit): Promise<ApiResult<T>> {
   const res = await fetch(`${BASE}${path}`, init)
-  const data = (await res.json()) as ApiResponse<T>
+  // A worker 500 (text/plain) or a Cloudflare edge error (HTML) isn't JSON; fall
+  // back to a synthetic envelope so callers can still branch on res.status.
+  const data = await res.json().catch(() => ({ message: res.statusText || 'Server error', data: null }) as ApiResponse<T>)
   return { ok: res.ok, status: res.status, data }
 }
 
@@ -44,5 +46,8 @@ export const changePassword = (currentPass: string, newPass: string) =>
 export const getAllRecords = () => request<{ records: UrlRecord[] }>('/get_all_records')
 
 export const deleteRecord = (url: string) => request('/delete_record', json({ url }, 'DELETE'))
+
+// Exact delete by short key (admin row buttons) — skips the server's fuzzy matching.
+export const deleteRecordByShort = (short: string) => request('/delete_record', json({ short }, 'DELETE'))
 
 export const deleteAllRecords = () => request('/delete_all_records', { method: 'DELETE' })

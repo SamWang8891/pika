@@ -140,7 +140,9 @@ You need a Cloudflare account (the free tier works) and [pnpm](https://pnpm.io).
    ```bash
    pnpm db:migrate
    ```
-4. Set the secrets:
+   The `admin` account is seeded with **no usable password** — nobody can log in
+   until you set one in step 6.
+4. Set the secrets (the worker returns `500` on `/api/v4/*` until both are set):
    ```bash
    pnpm wrangler secret put SECRET_KEY    # e.g. openssl rand -hex 64
    pnpm wrangler secret put BEARER_TOKEN  # e.g. openssl rand -hex 16
@@ -149,7 +151,14 @@ You need a Cloudflare account (the free tier works) and [pnpm](https://pnpm.io).
    ```bash
    pnpm run deploy
    ```
-6. You're all set! Add a [custom domain](https://developers.cloudflare.com/workers/configuration/routing/custom-domains/)
+6. Set the admin password using the bearer token (min 8 characters):
+   ```bash
+   curl -X POST https://<your-worker-url>/api/v4/change_pass \
+     -H "Authorization: Bearer <BEARER_TOKEN>" \
+     -H "Content-Type: application/json" \
+     -d '{"new_pass":"your-strong-password"}'
+   ```
+7. You're all set! Add a [custom domain](https://developers.cloudflare.com/workers/configuration/routing/custom-domains/)
    to the worker if you want your links on your own hostname.
 
 ### Redirect Behavior 🔀
@@ -197,28 +206,24 @@ curl -X POST https://example.com/api/v4/create_record \
 
 Access the admin panel at: `https://example.com/admin`
 
-Default admin account:
-
-```plaintext
-username: admin
-password: password
-```
-
-Remember to change the password after the first login.
+The username is `admin`; set the password during deploy (step 6) with a bearer-token
+call to `/api/v4/change_pass`. There is no default password.
 
 ### Resetting the Admin Password 🔑
 
-Forgot the password? Reset it back to `password` (the `\$` escapes matter — the hash contains `$`):
+Forgot the password? Clear it, then set a new one via the bearer token (as in deploy step 6).
+An empty stored value fails the password check, so no one can log in in the meantime:
 
 ```bash
-pnpm wrangler d1 execute pika --remote --command "UPDATE login SET password='pbkdf2\$100000\$I/3PIRTUbXeLEOYhShbQrw==\$gT/GEuB1CrPa7URCcXVcOa8Pis48gWlA5yeq94SoLjQ=' WHERE username='admin'"
+pnpm wrangler d1 execute pika --remote --command "UPDATE login SET password='' WHERE username='admin'"
 ```
 
 ### Rate Limiting 🕒
 
-The worker itself does not rate-limit (the old nginx 10 r/s rule is gone). If you need one, add a
-[Cloudflare WAF rate limiting rule](https://developers.cloudflare.com/waf/rate-limiting-rules/) on your zone —
-it runs in front of the worker and is configurable per path.
+The worker itself does not rate-limit (the old nginx 10 r/s rule is gone). If your instance is
+public, add a [Cloudflare WAF rate limiting rule](https://developers.cloudflare.com/waf/rate-limiting-rules/)
+on your zone — e.g. 5 requests/minute per IP on `POST /api/v4/login` to throttle brute-force, plus a
+looser cap on `/api/v4/create_record` if you leave shortening unauthenticated.
 
 ### Customizing the Dictionary 📚
 
@@ -260,7 +265,9 @@ Local secrets live in `.dev.vars` (copy `.dev.vars.example`). `pnpm check` type-
 
 The authenticated API endpoints (`change_pass`, `delete_record`, `get_all_records`, `delete_all_records`)
 accept `Authorization: Bearer <BEARER_TOKEN>` in place of the session cookie, so scripts don't need to log
-in. The bearer token also skips the current-password check on `change_pass`.
+in. The bearer token also skips the current-password check on `change_pass`; a **session-authenticated**
+`change_pass` must include the correct `current_pass`. New passwords must be at least 8 characters, and
+changing the password invalidates all existing sessions.
 
 ---
 
