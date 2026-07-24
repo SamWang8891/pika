@@ -105,6 +105,12 @@ async function cleanupExpired(db: D1Database): Promise<void> {
 
 const api = new Hono<AppContext>()
 
+// Lowercase only, so a key can be read aloud or typed with no case to guess.
+// Keys are public identifiers, not secrets, so the slight modulo bias is fine.
+const ALNUM = 'abcdefghijklmnopqrstuvwxyz0123456789'
+const randomKey = (len: number): string =>
+  [...crypto.getRandomValues(new Uint8Array(len))].map((b) => ALNUM[b % ALNUM.length]).join('')
+
 const reply = (c: Ctx, message: string, status = 200) => c.json({ message, data: null }, status as 200)
 const body = (c: Ctx) => c.req.json().catch(() => ({}) as Record<string, unknown>)
 const str = (v: unknown) => (typeof v === 'string' ? v : '')
@@ -167,6 +173,30 @@ api.post('/create_record', async (c) => {
   const db = c.env.DB
   await cleanupExpired(db)
   const expiresAt = computeExpiresAt(str(b.expires_in) || '7d')
+
+  if (b.random_string === true) {
+    // Random-string mode: no dictionary, no dedup — always mints a fresh key.
+    // The UNIQUE constraint on urls.short is the collision check; start at 4
+    // chars and grow one char after 10 straight collisions (36^4 ≈ 1.7M keys,
+    // so growth only matters for a pathologically full table).
+    for (let len = 4; len <= 16; len++) {
+      for (let attempt = 0; attempt < 10; attempt++) {
+        const key = randomKey(len)
+        if (FORBIDDEN_KEYWORDS.has(key)) continue
+        try {
+          await db.batch([
+            // If it happens to be a dictionary word, take it out of the random pool.
+            db.prepare('UPDATE dict SET used = 1 WHERE word = ?1').bind(key),
+            db.prepare('INSERT INTO urls (orig, short, created_at, expires_at) VALUES (?1, ?2, datetime(\'now\'), ?3)').bind(url, key, expiresAt),
+          ])
+          return keyed('Record created!', key)
+        } catch {
+          // collision — re-roll
+        }
+      }
+    }
+    return keyed('Could not allocate a key, please retry.', null, 503)
+  }
 
   if (keyword !== '') {
     if (FORBIDDEN_KEYWORDS.has(keyword) || !KEYWORD_RE.test(keyword)) return keyed('Keyword is illegal!', null, 400)

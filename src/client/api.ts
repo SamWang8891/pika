@@ -23,8 +23,8 @@ const json = (body: unknown, method = 'POST'): RequestInit => ({
   body: JSON.stringify(body),
 })
 
-export const createRecord = (url: string, customKeyword = '', expiresIn: ExpiresIn = '7d') =>
-  request<{ shortened_key: string | null }>('/create_record', json({ url, custom_keyword: customKeyword, expires_in: expiresIn }))
+export const createRecord = (url: string, customKeyword = '', expiresIn: ExpiresIn = '7d', randomString = false) =>
+  request<{ shortened_key: string | null }>('/create_record', json({ url, custom_keyword: customKeyword, expires_in: expiresIn, random_string: randomString }))
 
 export const searchRecord = (shortKey: string) =>
   request<{ original_url: string | null }>(`/search_record?${new URLSearchParams({ short_key: shortKey })}`)

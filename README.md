@@ -31,6 +31,7 @@ A very simple URL shortener that converts URLs into easy-to-remember English wor
 - [Usage 🚀](#usage-)
     - [Deploying ⚙️](#deploying-)
     - [Redirect Behavior 🔀](#redirect-behavior-)
+    - [Random Strings 🎲](#random-strings-)
     - [Admin Panel 🛡](#admin-panel-)
     - [Resetting the Admin Password 🔑](#resetting-the-admin-password-)
     - [Rate Limiting 🕒](#rate-limiting-)
@@ -60,6 +61,8 @@ Found randomly generated URLs too hard to remember? This project offers another 
 
 - Generates user-friendly shortened URLs like [https://example.com/apple](https://google.com).
 - Shortened URLs can also be customized.
+- Prefer opaque links? A second button shortens with a short random string (4+ lowercase characters) instead
+  of a dictionary word.
 - Resolved server-side as an HTTP `307`, so links work in browsers *and* in command-line tools such as
   `curl` or PowerShell's `irm`.
 - Apple mobile web app capability—add it to your home screen for a full-screen app-like experience.
@@ -168,6 +171,27 @@ visitors to the old destination.
 
 > ⚠️ Piping a shortened link into a shell runs whatever that record currently points at, and anyone with
 > admin access can repoint it. Only do this with links you control.
+
+### Random Strings 🎲
+
+Don't want a dictionary word? **Shorten with random string** on the home page asks the server for an opaque
+alphanumeric key instead. How it's allocated, server-side:
+
+- Keys are **all lowercase** (`a-z0-9`) and start at **4 characters** (~1.7M combinations) — no case to
+  guess when typing one out.
+- A key is claimed by inserting it directly — the database's `UNIQUE` constraint is the collision check, so
+  two concurrent requests can never get the same key.
+- After **10 collisions in a row** the length grows by one character and it tries again.
+- Random-string mode always mints a fresh key: shortening the same URL twice gives two different links
+  (unlike dictionary mode, which returns the existing one).
+
+The same thing over the API — `random_string: true` on `create_record`:
+
+```bash
+curl -X POST https://example.com/api/v4/create_record \
+  -H 'content-type: application/json' \
+  -d '{"url":"https://example.com/very-long-url","random_string":true,"expires_in":"7d"}'
+```
 
 ### Admin Panel 🛡
 

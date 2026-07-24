@@ -384,6 +384,16 @@ a:hover {
   color: var(--accent);
 }
 
+/* The key part of a shortened URL, boxed like inline code */
+.key-chip {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.9em;
+  background: var(--bg-tertiary);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.05em 0.35em;
+}
+
 /* ── Table / Records ── */
 .records-table {
   width: 100%;

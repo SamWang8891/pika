@@ -11,6 +11,7 @@ interface Result {
   shortenedUrl: string | null;
   originalUrl: string;
   isOriginalQR: boolean;
+  isRandom: boolean;
 }
 
 export default function Home() {
@@ -55,29 +56,29 @@ export default function Home() {
     return () => { cancelled = true; };
   }, [result, dark]);
 
-  async function handleShorten(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  async function shorten(randomString: boolean) {
     const trimmed = url.trim();
     if (!trimmed) return;
     if (trimmed.includes(' ')) {
       toast.error('URL must not contain spaces');
       return;
     }
-    if (keyword.trim() && /[^a-zA-Z0-9]/.test(keyword.trim())) {
+    const kw = randomString ? '' : keyword.trim();
+    if (kw && /[^a-zA-Z0-9]/.test(kw)) {
       toast.error('Custom keyword can only contain letters and numbers');
       return;
     }
 
     setLoading(true);
     try {
-      const res = await createRecord(trimmed, keyword.trim(), expiresIn);
+      const res = await createRecord(trimmed, kw, expiresIn, randomString);
       if (!res.ok) {
         toast.error(res.data.message || 'Failed to create link');
         return;
       }
       const shortened = `${location.origin}/${res.data.data.shortened_key}`;
       const origForDisplay = /^https?:\/\//.test(trimmed) ? trimmed : `https://${trimmed}`;
-      setResult({ shortenedUrl: shortened, originalUrl: origForDisplay, isOriginalQR: false });
+      setResult({ shortenedUrl: shortened, originalUrl: origForDisplay, isOriginalQR: false, isRandom: randomString });
       setUrl('');
       setKeyword('');
       toast.success('Link created!');
@@ -89,6 +90,11 @@ export default function Home() {
     }
   }
 
+  function handleShorten(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    void shorten(false);
+  }
+
   function handleOriginalQR(e: MouseEvent<HTMLButtonElement>) {
     e.preventDefault();
     const trimmed = url.trim();
@@ -98,7 +104,7 @@ export default function Home() {
       return;
     }
     const origUrl = /^https?:\/\//.test(trimmed) ? trimmed : `https://${trimmed}`;
-    setResult({ shortenedUrl: null, originalUrl: origUrl, isOriginalQR: true });
+    setResult({ shortenedUrl: null, originalUrl: origUrl, isOriginalQR: true, isRandom: false });
     setUrl('');
     toast.success('QR code generated!');
   }
@@ -168,9 +174,15 @@ export default function Home() {
                     <svg width="18" height="18" viewBox="0 -960 960 960" fill="currentColor">
                       <path d="M440-280H280q-83 0-141.5-58.5T80-480q0-83 58.5-141.5T280-680h160v80H280q-50 0-85 35t-35 85q0 50 35 85t85 35h160v80ZM320-440v-80h320v80H320Zm200 160v-80h160q50 0 85-35t35-85q0-50-35-85t-85-35H520v-80h160q83 0 141.5 58.5T880-480q0 83-58.5 141.5T680-280H520Z" />
                     </svg>
-                    Shorten URL
+                    Shorten
                   </>
                 )}
+              </button>
+              <button type="button" className="btn btn-secondary" disabled={loading} onClick={() => void shorten(true)}>
+                <svg width="18" height="18" viewBox="0 -960 960 960" fill="currentColor">
+                  <path d="M560-160v-80h104L537-367l57-57 126 126v-102h80v240H560Zm-344 0-56-56 504-504H560v-80h240v240h-80v-104L216-160Zm151-377L160-744l56-56 207 207-56 56Z" />
+                </svg>
+                Shorten with random string
               </button>
               <button type="button" className="btn btn-secondary" onClick={handleOriginalQR}>
                 <svg width="18" height="18" viewBox="0 -960 960 960" fill="currentColor">
@@ -231,8 +243,12 @@ export default function Home() {
                 rel="noopener noreferrer"
                 className="url-big"
               >
-                {result.shortenedUrl}
+                {result.shortenedUrl.slice(0, result.shortenedUrl.lastIndexOf('/') + 1)}
+                <code className="key-chip">{result.shortenedUrl.slice(result.shortenedUrl.lastIndexOf('/') + 1)}</code>
               </a>
+              {result.isRandom && (
+                <span style={{ color: 'var(--text-muted)', fontSize: 13 }}>all lowercase</span>
+              )}
             </div>
           )}
 
