@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 // official Pika server and Chrome extension; self-hosters should edit it to match.
 export const POLICY_UPDATED = 'October 24, 2026';
 export const ISSUES_URL = 'https://github.com/SamWang8891/pika/issues';
+export const REMOVAL_EMAIL = 'g348.8891@gmail.com';
 
 export default function PolicyPage({ title, children }: { title: string; children: ReactNode }) {
   return (

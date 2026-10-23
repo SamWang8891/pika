@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import PolicyPage, { ISSUES_URL } from '../components/PolicyPage';
+import PolicyPage, { ISSUES_URL, REMOVAL_EMAIL } from '../components/PolicyPage';
 
 export default function Privacy() {
   return (
@@ -76,9 +76,9 @@ export default function Privacy() {
       <p>
         A link is deleted automatically once it expires, at the time chosen when it was created (1 hour to
         7 days, or never). Links can also be removed earlier, as described in the{' '}
-        <Link to="/terms">Terms of Use</Link>. To ask for a link to be removed, open an issue on{' '}
-        <a href={ISSUES_URL} target="_blank" rel="noopener noreferrer">GitHub</a> with the short link.
-        Issues are public, so don't include personal information.
+        <Link to="/terms">Terms of Use</Link>. To ask for a link to be removed, email{' '}
+        <a href={`mailto:${REMOVAL_EMAIL}?subject=${encodeURIComponent('Pika link removal')}`}>{REMOVAL_EMAIL}</a>{' '}
+        with the short link.
       </p>
 
       <h3>Children</h3>
