@@ -14,7 +14,7 @@ const DEFAULT_MINUTES = 10080 // 7d
 const MAX_MINUTES = 100 * 365 * 24 * 60 // ~100 years; larger values overflow the Date or sort below "now"
 // Client-side routes that are valid [A-Za-z0-9]+ path segments; skip the D1
 // lookup for them (they are forbidden as keywords, so they can never match).
-const SPA_ROUTES = new Set(['admin', 'login', 'logout', 'privacy', 'terms'])
+const SPA_ROUTES = new Set(['admin', 'login', 'logout'])
 
 // ── crypto helpers ──────────────────────────────────────────────────────────
 

@@ -18,8 +18,9 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/logout" element={<Logout />} />
         <Route path="/change_pass" element={<ChangePassword />} />
-        <Route path="/privacy" element={<Privacy />} />
-        <Route path="/terms" element={<Terms />} />
+        {/* Hyphenated so they can never collide with a short-link keyword ([A-Za-z0-9]+). */}
+        <Route path="/privacy-policy" element={<Privacy />} />
+        <Route path="/terms-of-use" element={<Terms />} />
         <Route path="/:shortKey" element={<Redirect />} />
         {/* Multi-segment unknown paths don't match /:shortKey — send them home
             instead of rendering a blank page. */}

@@ -242,7 +242,7 @@ Random keywords come from the word pool in `migrations/0002_seed_dictionary.sql`
 
 **Reserved Words:**
 Avoid using the following reserved words:
-`login`, `admin`, `logout`, `api`, `index`, `index.html`, `change_pass`, `privacy`, `terms`. They can never be claimed as keywords.
+`login`, `admin`, `logout`, `api`, `index`, `index.html`, `change_pass`. They can never be claimed as keywords.
 
 ### Chrome Extension 🧩
 
@@ -274,8 +274,8 @@ connect step. `pnpm zip` packs `dist/` for the Chrome Web Store.
 Admin login in the extension uses the server's normal session cookie, so it shares the login with the web
 app in the same Chrome profile.
 
-The web app serves a privacy policy at `/privacy` and terms of use at `/terms`, linked from its footer. Use
-`https://<your-domain>/privacy` as the store listing's privacy policy URL. The text describes the official
+The web app serves a privacy policy at `/privacy-policy` and terms of use at `/terms-of-use`, linked from
+its footer. Use `https://<your-domain>/privacy-policy` as the store listing's privacy policy URL. The text describes the official
 Pika server, so self-hosters should edit `src/client/pages/Privacy.tsx` and `Terms.tsx`.
 
 ---

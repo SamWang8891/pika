@@ -75,8 +75,8 @@ export default function Layout() {
           </svg>
           SamWang8891/pika
         </a>
-        <Link to="/privacy" style={footerLinkStyle}>Privacy</Link>
-        <Link to="/terms" style={footerLinkStyle}>Terms</Link>
+        <Link to="/privacy-policy" style={footerLinkStyle}>Privacy</Link>
+        <Link to="/terms-of-use" style={footerLinkStyle}>Terms</Link>
       </footer>
     </>
   );

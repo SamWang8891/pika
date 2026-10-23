@@ -74,9 +74,10 @@ export default function Privacy() {
 
       <h3>How long links are kept</h3>
       <p>
-        A link is deleted automatically once it expires, at the time chosen when it was created (1 hour to
-        7 days, or never). Links can also be removed earlier, as described in the{' '}
-        <Link to="/terms">Terms of Use</Link>. To ask for a link to be removed, email{' '}
+        A link stops working when it expires, at the time chosen when it was created (1 hour to 7 days, or
+        never). Its stored data is deleted at the next routine cleanup, which runs whenever links are
+        created or listed, so it may remain stored for a while after expiry. Links can also be removed
+        earlier, as described in the <Link to="/terms-of-use">Terms of Use</Link>. To ask for a link to be removed, email{' '}
         <a href={`mailto:${REMOVAL_EMAIL}?subject=${encodeURIComponent('Pika link removal')}`}>{REMOVAL_EMAIL}</a>{' '}
         with the short link.
       </p>

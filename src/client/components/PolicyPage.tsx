@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-// Shared frame for /privacy and /terms. The text in those pages describes the
+// Shared frame for /privacy-policy and /terms-of-use. The text in those pages describes the
 // official Pika server and Chrome extension; self-hosters should edit it to match.
 export const POLICY_UPDATED = 'October 24, 2026';
 export const ISSUES_URL = 'https://github.com/SamWang8891/pika/issues';

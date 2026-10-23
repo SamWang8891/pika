@@ -6,7 +6,7 @@ export default function Terms() {
     <PolicyPage title="Terms of Use">
       <p>
         By using this Pika server or the Pika Chrome extension, you agree to these terms. How data is
-        handled is covered in the <Link to="/privacy">Privacy Policy</Link>.
+        handled is covered in the <Link to="/privacy-policy">Privacy Policy</Link>.
       </p>
 
       <h3>Provided as is</h3>

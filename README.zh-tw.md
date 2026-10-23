@@ -225,7 +225,7 @@ worker 之前生效，且可依路徑設定。
 
 **保留字：**
 請避免使用以下單字：
-`login`、`admin`、`logout`、`api`、`index`、`index.html`、`change_pass`、`privacy`、`terms`。這些單字永遠無法被當作關鍵字使用。
+`login`、`admin`、`logout`、`api`、`index`、`index.html`、`change_pass`。這些單字永遠無法被當作關鍵字使用。
 
 
 ### Chrome 擴充功能 🧩
@@ -255,8 +255,8 @@ pnpm build          # 輸出至 chrome-extension/dist
 
 擴充功能的管理員登入使用伺服器原本的 session cookie，因此在同一個 Chrome 設定檔中與網頁版共用登入狀態。
 
-網頁版在 `/privacy` 提供隱私權政策、在 `/terms` 提供使用條款，頁尾有連結。上架時隱私權政策網址可填
-`https://<你的網域>/privacy`。內容描述的是官方 Pika 伺服器，自架者請修改 `src/client/pages/Privacy.tsx` 與 `Terms.tsx`。
+網頁版在 `/privacy-policy` 提供隱私權政策、在 `/terms-of-use` 提供使用條款，頁尾有連結。上架時隱私權政策網址可填
+`https://<你的網域>/privacy-policy`。內容描述的是官方 Pika 伺服器，自架者請修改 `src/client/pages/Privacy.tsx` 與 `Terms.tsx`。
 
 ---
 
