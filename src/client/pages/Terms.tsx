@@ -31,6 +31,14 @@ export default function Terms() {
         </li>
       </ul>
 
+      <h3>Want full control? Host your own</h3>
+      <p>
+        Self-hosting is encouraged. Pika is open source and runs on Cloudflare's free tier, so you can
+        run your own server, on your own domain, with your links and data under your control. The{' '}
+        <a href="https://github.com/SamWang8891/pika#deploying-" target="_blank" rel="noopener noreferrer">deploy guide</a>{' '}
+        takes a few minutes, and the Pika Chrome extension works with any Pika server.
+      </p>
+
       <h3>Acceptable use</h3>
       <p>Don't use Pika to create links to, or for:</p>
       <ul>
