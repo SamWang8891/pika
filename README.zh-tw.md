@@ -35,6 +35,7 @@
     - [重設管理員密碼 🔑](#重設管理員密碼-)
     - [速率限制 🕒](#速率限制-)
     - [客製化字典 📚](#客製化字典-)
+    - [Chrome 擴充功能 🧩](#chrome-擴充功能-)
 - [開發 🛠](#開發-)
     - [檔案結構 🗄](#檔案結構-)
     - [事前準備 ✅](#事前準備-)
@@ -65,6 +66,7 @@
 - 支援淺色和深色模式。
 - 自定義字典，客製化隨機生成的短網址。
 - 運行在 Cloudflare 的免費方案上——不需要維護伺服器。
+- Chrome 擴充功能：在工具列直接縮短目前瀏覽的頁面，且可連到任何你指定的 Pika 伺服器。
 
 ---
 
@@ -219,6 +221,32 @@ worker 之前生效，且可依路徑設定。
 請避免使用以下單字：
 `login`、`admin`、`logout`、`api`、`index`、`index.html`、`change_pass`。這些單字永遠無法被當作關鍵字使用。
 
+
+### Chrome 擴充功能 🧩
+
+`chrome-extension/` 是一個 Manifest V3 擴充功能，功能與網頁版相同，並調整成適合工具列彈出視窗的大小：
+以字典單字、自訂關鍵字或隨機字串縮短網址、設定有效期限、產生 QR Code，以及管理員頁面。此外它還會：
+
+- 自動帶入目前瀏覽頁面的網址。
+- 可連到**任何** Pika 伺服器。在設定頁輸入伺服器位址後，Chrome 會詢問是否允許存取該網站，
+  接著擴充功能會呼叫 `GET /api/v4/health`，確認對方確實是 Pika 後端才會儲存。
+
+建構並載入 Chrome：
+
+```bash
+cd chrome-extension
+pnpm install
+pnpm build          # 輸出至 chrome-extension/dist
+```
+
+開啟 `chrome://extensions`，打開**開發人員模式**，點選**載入未封裝項目**，選擇 `chrome-extension/dist`。
+
+若要發佈預先設定好你的伺服器的版本，請在建構前設定 `VITE_PIKA_DEFAULT_BACKEND`（參考
+`chrome-extension/.env.example`）。該伺服器會在安裝時就取得網站存取權限，使用者不需再手動連線。
+`pnpm zip` 會將 `dist/` 打包，供上架 Chrome Web Store 使用。
+
+擴充功能的管理員登入使用伺服器原本的 session cookie，因此在同一個 Chrome 設定檔中與網頁版共用登入狀態。
+
 ---
 
 ## 開發 🛠
@@ -229,6 +257,8 @@ worker 之前生效，且可依路徑設定。
 - `src/server`：Hono worker——`/api/v4`、短網址導向、SPA 靜態資源。
 - `src/shared`：前後端共用的型別與常數。
 - `migrations`：D1 資料表結構與字典種子。
+- `chrome-extension`：Chrome 擴充功能（獨立的 Vite + React 套件，共用 `src/shared` 與
+  `src/client/style.css`）。詳見 [`chrome-extension/README.md`](chrome-extension/README.md)。
 
 ### 事前準備 ✅
 

@@ -36,6 +36,7 @@ A very simple URL shortener that converts URLs into easy-to-remember English wor
     - [Resetting the Admin Password 🔑](#resetting-the-admin-password-)
     - [Rate Limiting 🕒](#rate-limiting-)
     - [Customizing the Dictionary 📚](#customizing-the-dictionary-)
+    - [Chrome Extension 🧩](#chrome-extension-)
 - [Development 🛠](#development-)
     - [File Structure 🗄](#file-structure-)
     - [Prerequisites ✅](#prerequisites-)
@@ -69,6 +70,7 @@ Found randomly generated URLs too hard to remember? This project offers another 
 - Supports light and dark modes for a better user experience.
 - Fully customizable dictionary for randomized URL shortening.
 - Runs on Cloudflare's free tier — no server to maintain.
+- Chrome extension: shorten the page you're on from the toolbar, against any Pika server you point it at.
 
 ---
 
@@ -234,6 +236,34 @@ Random keywords come from the word pool in `migrations/0002_seed_dictionary.sql`
 Avoid using the following reserved words:
 `login`, `admin`, `logout`, `api`, `index`, `index.html`, `change_pass`. They can never be claimed as keywords.
 
+### Chrome Extension 🧩
+
+`chrome-extension/` is a Manifest V3 extension with the web app's features, sized for the toolbar
+popup: shorten with a dictionary word, custom keyword, or random string, pick an expiry, get a QR code,
+and use the admin panel. On top of that it:
+
+- Pre-fills the URL with the page you're on.
+- Works with **any** Pika server. Enter its address in Settings; Chrome asks for access to that site, then
+  the extension calls `GET /api/v4/health` and only saves the server if it answers as a Pika backend.
+
+Build it and load it into Chrome:
+
+```bash
+cd chrome-extension
+pnpm install
+pnpm build          # outputs chrome-extension/dist
+```
+
+Open `chrome://extensions`, turn on **Developer mode**, click **Load unpacked**, and pick
+`chrome-extension/dist`.
+
+To ship a build preconfigured for your instance, set `VITE_PIKA_DEFAULT_BACKEND` before building (see
+`chrome-extension/.env.example`). That server gets its site access at install time, so users skip the
+connect step. `pnpm zip` packs `dist/` for the Chrome Web Store.
+
+Admin login in the extension uses the server's normal session cookie, so it shares the login with the web
+app in the same Chrome profile.
+
 ---
 
 ## Development 🛠
@@ -244,6 +274,8 @@ Avoid using the following reserved words:
 - `src/server`: The Hono worker — `/api/v4`, short-link redirects, SPA asset serving.
 - `src/shared`: Types and constants shared by both.
 - `migrations`: D1 schema and dictionary seed.
+- `chrome-extension`: The Chrome extension (its own Vite + React package; reuses `src/shared` and
+  `src/client/style.css`). See [`chrome-extension/README.md`](chrome-extension/README.md).
 
 ### Prerequisites ✅
 
