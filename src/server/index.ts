@@ -1,7 +1,8 @@
 import { Hono } from 'hono'
 import type { Context } from 'hono'
 import { deleteCookie, getSignedCookie, setSignedCookie } from 'hono/cookie'
-import { FORBIDDEN_KEYWORDS, KEYWORD_RE } from '../shared/types'
+import { FORBIDDEN_KEYWORDS, KEYWORD_RE, PIKA_VERSION } from '../shared/types'
+import type { ApiResponse, HealthData } from '../shared/types'
 
 type AppContext = { Bindings: Env }
 
@@ -146,6 +147,17 @@ const randomKey = (len: number): string =>
 const reply = (c: Ctx, message: string, status = 200) => c.json({ message, data: null }, status as 200)
 const body = (c: Ctx) => c.req.json().catch(() => ({}) as Record<string, unknown>)
 const str = (v: unknown) => (typeof v === 'string' ? v : '')
+
+// Unauthenticated identity probe for clients that point at a user-chosen server
+// (the browser extension): `service` proves it's Pika, `api` which API it speaks.
+// Registered before the secrets guard below so a half-deployed instance still
+// identifies itself and reports what's missing instead of a bare 500.
+api.get('/health', (c) =>
+  c.json<ApiResponse<HealthData>>({
+    message: 'ok',
+    data: { service: 'pika', version: PIKA_VERSION, api: 'v4', configured: Boolean(c.env.SECRET_KEY && c.env.BEARER_TOKEN) },
+  }),
+)
 
 // Fail loudly (one clear 500) if the deploy forgot `wrangler secret put` — the old
 // backend refused to boot without these; here bearer auth would otherwise silently

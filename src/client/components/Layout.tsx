@@ -1,6 +1,7 @@
 import { useState, type CSSProperties, type MouseEvent } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTheme } from '../theme';
+import { PIKA_VERSION } from '../../shared/types';
 
 export default function Layout() {
   const { dark, toggle } = useTheme();
@@ -62,7 +63,7 @@ export default function Layout() {
 
       {/* Footer */}
       <footer style={footerStyle}>
-        <span style={footerVersionStyle}>v5.0.0</span>
+        <span style={footerVersionStyle}>v{PIKA_VERSION}</span>
         <a
           href="https://github.com/SamWang8891/pika"
           target="_blank"

@@ -4,9 +4,11 @@
 
 # Pika
 
-<img src="https://img.shields.io/badge/Version-v5.0.0-green">
+<img src="https://img.shields.io/badge/Version-v5.1.0-green">
 
 一個簡單的短網址器，將網址轉換為易於記憶的英文單字，使其容易記憶。.
+
+也提供 [Chrome 擴充功能](#chrome-擴充功能-)，可直接縮短目前瀏覽的頁面。
 
 [Link for English version](README.md)
 
@@ -19,6 +21,10 @@
 > `/api/v4` API 以及短網址導向；資料庫使用 D1。自架版的
 > FastAPI + nginx + Docker 架構止於
 > [v4.0.0](https://github.com/SamWang8891/pika/releases)，該版本仍可在發行頁面下載。
+
+> [!NOTE]
+> **v5.1 新功能：Chrome 擴充功能。** 可從工具列彈出視窗縮短目前分頁，或在任何頁面、連結上按右鍵複製短網址，
+> 並可連到任何你指定的 Pika 伺服器。詳見 [Chrome 擴充功能 🧩](#chrome-擴充功能-)。
 
 ---
 
@@ -35,6 +41,7 @@
     - [重設管理員密碼 🔑](#重設管理員密碼-)
     - [速率限制 🕒](#速率限制-)
     - [客製化字典 📚](#客製化字典-)
+    - [Chrome 擴充功能 🧩](#chrome-擴充功能-)
 - [開發 🛠](#開發-)
     - [檔案結構 🗄](#檔案結構-)
     - [事前準備 ✅](#事前準備-)
@@ -65,6 +72,7 @@
 - 支援淺色和深色模式。
 - 自定義字典，客製化隨機生成的短網址。
 - 運行在 Cloudflare 的免費方案上——不需要維護伺服器。
+- Chrome 擴充功能：從工具列彈出視窗或右鍵選單直接縮短目前瀏覽的頁面，且可連到任何你指定的 Pika 伺服器。
 
 ---
 
@@ -219,6 +227,34 @@ worker 之前生效，且可依路徑設定。
 請避免使用以下單字：
 `login`、`admin`、`logout`、`api`、`index`、`index.html`、`change_pass`。這些單字永遠無法被當作關鍵字使用。
 
+
+### Chrome 擴充功能 🧩
+
+`chrome-extension/` 是一個 Manifest V3 擴充功能，功能與網頁版相同，並調整成適合工具列彈出視窗的大小：
+以字典單字、自訂關鍵字或隨機字串縮短網址、設定有效期限、產生 QR Code，以及管理員頁面。此外它還會：
+
+- 自動帶入目前瀏覽頁面的網址。
+- 提供右鍵選單，不必開啟彈出視窗即可複製：在頁面上可選**複製短網址**或**複製原始網址**，
+  在連結上可將該連結**複製為 Pika 短網址**。
+- 可連到**任何** Pika 伺服器。在設定頁輸入伺服器位址後，Chrome 會詢問是否允許存取該網站，
+  接著擴充功能會呼叫 `GET /api/v4/health`，確認對方確實是 Pika 後端才會儲存。
+
+建構並載入 Chrome：
+
+```bash
+cd chrome-extension
+pnpm install
+pnpm build          # 輸出至 chrome-extension/dist
+```
+
+開啟 `chrome://extensions`，打開**開發人員模式**，點選**載入未封裝項目**，選擇 `chrome-extension/dist`。
+
+若要發佈預先設定好你的伺服器的版本，請在建構前設定 `VITE_PIKA_DEFAULT_BACKEND`（參考
+`chrome-extension/.env.example`）。該伺服器會在安裝時就取得網站存取權限，使用者不需再手動連線。
+`pnpm zip` 會將 `dist/` 打包，供上架 Chrome Web Store 使用。
+
+擴充功能的管理員登入使用伺服器原本的 session cookie，因此在同一個 Chrome 設定檔中與網頁版共用登入狀態。
+
 ---
 
 ## 開發 🛠
@@ -229,6 +265,8 @@ worker 之前生效，且可依路徑設定。
 - `src/server`：Hono worker——`/api/v4`、短網址導向、SPA 靜態資源。
 - `src/shared`：前後端共用的型別與常數。
 - `migrations`：D1 資料表結構與字典種子。
+- `chrome-extension`：Chrome 擴充功能（獨立的 Vite + React 套件，共用 `src/shared` 與
+  `src/client/style.css`）。詳見 [`chrome-extension/README.md`](chrome-extension/README.md)。
 
 ### 事前準備 ✅
 
@@ -246,11 +284,26 @@ pnpm dev                # Vite 開發伺服器，含 worker 與本機 D1
 本機密鑰放在 `.dev.vars`（可複製 `.dev.vars.example`）。`pnpm check` 會做型別檢查與建構；
 `pnpm preview` 會在本機以正式版建構執行。
 
+Chrome 擴充功能是獨立的套件：在 `chrome-extension/` 內執行 `pnpm install` 與 `pnpm build`，
+再將它連到 `pnpm dev` 印出的網址。詳見 [`chrome-extension/README.md`](chrome-extension/README.md)。
+
+每個 pull request 都會執行 CI（`.github/workflows/ci.yml`）：分別對網頁版與擴充功能執行 `pnpm check`。
+
 ### 腳本存取 API 🤖
 
 需要驗證的 API 端點（`change_pass`、`delete_record`、`get_all_records`、`delete_all_records`）
 可改用 `Authorization: Bearer <BEARER_TOKEN>` 標頭取代 session cookie，腳本不需登入。
 Bearer token 在 `change_pass` 上也會跳過目前密碼的檢查。
+
+`GET /api/v4/health` 不需驗證，用來表明伺服器身分，讓連到使用者自填位址的客戶端（例如 Chrome
+擴充功能）確認對方確實是 Pika：
+
+```json
+{"message":"ok","data":{"service":"pika","version":"5.1.0","api":"v4","configured":true}}
+```
+
+在 `SECRET_KEY` 與 `BEARER_TOKEN` 都設定好之前，`configured` 會是 `false`；與 `/api/v4` 的其他端點不同，
+`health` 在這種狀態下仍會正常回應，而不是回傳 `500`。
 
 ---
 

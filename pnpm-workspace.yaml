@@ -1,0 +1,9 @@
+# The root app is the only package here; chrome-extension/ keeps its own lockfile.
+# (The packages entry is required: pnpm 9 rejects a workspace file without it.)
+packages:
+  - .
+
+# pnpm 11+ fails the install on unapproved build scripts; these two are needed by wrangler.
+allowBuilds:
+  esbuild: true
+  workerd: true

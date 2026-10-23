@@ -1,0 +1,160 @@
+/* ═══════════════════════════════════════════════
+   Popup adaptations of the web design system
+   (src/client/style.css is loaded first, unchanged)
+   ═══════════════════════════════════════════════ */
+
+/* Chrome sizes a popup to its content (max 800×600). The web's 100dvh minimums
+   would feed back into that measurement, so pin the width and use a fixed floor
+   that keeps the popup from jumping in height between pages. */
+html {
+  scroll-behavior: auto;
+}
+
+body {
+  width: 400px;
+  min-height: 0;
+}
+
+#root {
+  min-height: 520px;
+}
+
+/* Every viewport here is narrower than the web's 640px breakpoint, so the
+   mobile card/button/page sizes already apply; these tighten a bit further. */
+.page {
+  padding: 0 14px 16px;
+}
+
+/* With a result, Home widens the popup (Chrome caps height at 600px, width at
+   800px) and shows the result beside the form so the whole QR fits. */
+body.wide {
+  width: 760px;
+}
+
+.page.home {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+body.wide .page.home {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+/* The popup hangs from a toolbar icon and grows leftward, so the result takes
+   the new space on the left and the form stays put under the cursor. */
+body.wide .result-card {
+  order: -1;
+}
+
+/* Long original URLs would push the QR below the fold; two lines, full URL on hover. */
+.result-orig {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+/* Copy button stays beside the link; the link may wrap, but never inside the key. */
+.result-short {
+  min-width: 0;
+  font-size: 1.1rem;
+  text-align: left;
+}
+
+.result-short .key-chip {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+/* All five expiry presets on one row instead of wrapping "Never" alone. */
+.pill-group {
+  flex-wrap: nowrap;
+}
+
+.pill {
+  flex: 1;
+  padding: 7px 4px;
+}
+
+/* ── Header icon buttons ── */
+.icon-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1.5px solid transparent;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s;
+}
+
+.icon-btn:hover:not(:disabled) {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.icon-btn.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.icon-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.icon-btn:focus-visible,
+.btn:focus-visible,
+.pill:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ── Admin record list (the web's 5-column table doesn't fit 400px) ── */
+.record-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.record-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 4px;
+  border-bottom: 1px solid var(--border);
+  transition: background-color 0.2s;
+}
+
+.record-item:last-child {
+  border-bottom: none;
+}
+
+.record-item:hover {
+  background: var(--bg-hover);
+}
+
+.record-orig {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  word-break: normal;
+  color: var(--text-secondary);
+  font-size: 0.76rem;
+}
+
+/* ── Small helper text under inputs ── */
+.hint {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+  margin-top: 8px;
+}
