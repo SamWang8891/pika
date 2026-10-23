@@ -4,9 +4,11 @@
 
 # Pika
 
-<img src="https://img.shields.io/badge/Version-v5.0.0-green">
+<img src="https://img.shields.io/badge/Version-v5.1.0-green">
 
 A very simple URL shortener that converts URLs into easy-to-remember English words for improved usability.
+
+Also comes as a [Chrome extension](#chrome-extension-) for shortening the page you're on.
 
 [台灣繁體中文 請按這](README.zh-tw.md)
 
@@ -20,6 +22,11 @@ A very simple URL shortener that converts URLs into easy-to-remember English wor
 > FastAPI + nginx + Docker stack ended with
 > [v4.0.0](https://github.com/SamWang8891/pika/releases), which remains available on the
 > release page.
+
+> [!NOTE]
+> **New in v5.1: Chrome extension.** Shorten the current tab from the toolbar popup, or right-click any page
+> or link to copy its short link, against any Pika server you point it at. See
+> [Chrome Extension 🧩](#chrome-extension-).
 
 ---
 
@@ -36,6 +43,7 @@ A very simple URL shortener that converts URLs into easy-to-remember English wor
     - [Resetting the Admin Password 🔑](#resetting-the-admin-password-)
     - [Rate Limiting 🕒](#rate-limiting-)
     - [Customizing the Dictionary 📚](#customizing-the-dictionary-)
+    - [Chrome Extension 🧩](#chrome-extension-)
 - [Development 🛠](#development-)
     - [File Structure 🗄](#file-structure-)
     - [Prerequisites ✅](#prerequisites-)
@@ -69,6 +77,8 @@ Found randomly generated URLs too hard to remember? This project offers another 
 - Supports light and dark modes for a better user experience.
 - Fully customizable dictionary for randomized URL shortening.
 - Runs on Cloudflare's free tier — no server to maintain.
+- Chrome extension: shorten the page you're on from the toolbar popup or the right-click menu, against any
+  Pika server you point it at.
 
 ---
 
@@ -234,6 +244,36 @@ Random keywords come from the word pool in `migrations/0002_seed_dictionary.sql`
 Avoid using the following reserved words:
 `login`, `admin`, `logout`, `api`, `index`, `index.html`, `change_pass`. They can never be claimed as keywords.
 
+### Chrome Extension 🧩
+
+`chrome-extension/` is a Manifest V3 extension with the web app's features, sized for the toolbar
+popup: shorten with a dictionary word, custom keyword, or random string, pick an expiry, get a QR code,
+and use the admin panel. On top of that it:
+
+- Pre-fills the URL with the page you're on.
+- Adds a right-click menu that copies without opening the popup: **Copy short link** or **Copy original URL**
+  for the page, and **Copy link as Pika short link** for a link.
+- Works with **any** Pika server. Enter its address in Settings; Chrome asks for access to that site, then
+  the extension calls `GET /api/v4/health` and only saves the server if it answers as a Pika backend.
+
+Build it and load it into Chrome:
+
+```bash
+cd chrome-extension
+pnpm install
+pnpm build          # outputs chrome-extension/dist
+```
+
+Open `chrome://extensions`, turn on **Developer mode**, click **Load unpacked**, and pick
+`chrome-extension/dist`.
+
+To ship a build preconfigured for your instance, set `VITE_PIKA_DEFAULT_BACKEND` before building (see
+`chrome-extension/.env.example`). That server gets its site access at install time, so users skip the
+connect step. `pnpm zip` packs `dist/` for the Chrome Web Store.
+
+Admin login in the extension uses the server's normal session cookie, so it shares the login with the web
+app in the same Chrome profile.
+
 ---
 
 ## Development 🛠
@@ -244,6 +284,8 @@ Avoid using the following reserved words:
 - `src/server`: The Hono worker — `/api/v4`, short-link redirects, SPA asset serving.
 - `src/shared`: Types and constants shared by both.
 - `migrations`: D1 schema and dictionary seed.
+- `chrome-extension`: The Chrome extension (its own Vite + React package; reuses `src/shared` and
+  `src/client/style.css`). See [`chrome-extension/README.md`](chrome-extension/README.md).
 
 ### Prerequisites ✅
 
@@ -261,6 +303,11 @@ pnpm dev                # Vite dev server with the worker and local D1
 Local secrets live in `.dev.vars` (copy `.dev.vars.example`). `pnpm check` type-checks and builds;
 `pnpm preview` serves the production build locally.
 
+The Chrome extension is a separate package: run `pnpm install` and `pnpm build` inside `chrome-extension/`,
+then connect it to the URL `pnpm dev` prints. See [`chrome-extension/README.md`](chrome-extension/README.md).
+
+Every pull request runs CI (`.github/workflows/ci.yml`): `pnpm check` for the web app and for the extension.
+
 ### API Access for Scripts 🤖
 
 The authenticated API endpoints (`change_pass`, `delete_record`, `get_all_records`, `delete_all_records`)
@@ -268,6 +315,16 @@ accept `Authorization: Bearer <BEARER_TOKEN>` in place of the session cookie, so
 in. The bearer token also skips the current-password check on `change_pass`; a **session-authenticated**
 `change_pass` must include the correct `current_pass`. New passwords must be at least 8 characters, and
 changing the password invalidates all existing sessions.
+
+`GET /api/v4/health` needs no auth and identifies the server, so clients pointed at a user-supplied address
+(like the Chrome extension) can confirm it's really Pika:
+
+```json
+{"message":"ok","data":{"service":"pika","version":"5.1.0","api":"v4","configured":true}}
+```
+
+`configured` stays `false` until both `SECRET_KEY` and `BEARER_TOKEN` are set; unlike the rest of
+`/api/v4`, `health` still answers in that state instead of returning `500`.
 
 ---
 

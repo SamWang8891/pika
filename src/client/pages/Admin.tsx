@@ -72,8 +72,10 @@ export default function Admin() {
     e.preventDefault();
     const val = deleteInput.trim();
     if (!val) return;
-    // The free-text box keeps the fuzzy match (full URL, short key, or original URL).
-    await runDelete(val, () => deleteRecord(removeBaseUrl(val)));
+    // A full short link names exactly one record, so delete it by key. Anything else
+    // (original URL or bare key) keeps the server's fuzzy match.
+    const key = shortKeyOf(val);
+    await runDelete(val, key ? () => deleteRecordByShort(key) : () => deleteRecord(val));
     setDeleteInput('');
   }
 
@@ -219,10 +221,13 @@ export default function Admin() {
   );
 }
 
-function removeBaseUrl(url: string) {
+// "https://<this host>/<key>" → key. Not stripped down to a bare key for the fuzzy
+// match: that tries original URLs first, so a record pointing at https://<key>
+// would be deleted instead of the link that was pasted.
+function shortKeyOf(input: string) {
   const escaped = location.host.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const pattern = new RegExp('^(?:https?://)?' + escaped + '/?', 'i');
-  return url.replace(pattern, '').replace(/^\//, '');
+  const match = input.match(new RegExp('^(?:https?://)?' + escaped + '/([A-Za-z0-9]+)/?$', 'i'));
+  return match ? match[1] : null;
 }
 
 function formatDate(dateStr: string) {

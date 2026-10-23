@@ -28,7 +28,7 @@
     {
       "binding": "DB",
       "database_name": "pika",
-      "database_id": "REPLACE_WITH_wrangler_d1_create_pika_OUTPUT",
+      "database_id": "08aa6094-1bc6-4dd6-ac88-7117c6651cb1",
       "migrations_dir": "migrations"
     }
   ],

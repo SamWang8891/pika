@@ -1,0 +1,51 @@
+# Type-check and build both packages on every pull request.
+name: CI
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+# A new push to the same PR cancels the run it supersedes.
+concurrency:
+  group: ci-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  web:
+    name: Web app
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 12
+          cache: true
+          cache_dependency_path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      # tsc -b over the client and worker projects, then the Vite + Cloudflare build.
+      - run: pnpm check
+
+  extension:
+    name: Chrome extension
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: chrome-extension
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 12
+          cache: true
+          cache_dependency_path: chrome-extension/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      # tsc, then the popup / offscreen / service-worker build and manifest.
+      - run: pnpm check
