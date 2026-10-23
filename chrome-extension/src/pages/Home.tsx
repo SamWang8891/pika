@@ -231,7 +231,7 @@ export default function Home() {
 
       {/* Result Card */}
       {result && (
-        <div className="card animate-scale-in" style={{ textAlign: 'center' }}>
+        <div className="card animate-scale-in result-card" style={{ textAlign: 'center' }}>
           {/* Non-ASCII warning */}
           {/[^\x00-\x7F]/.test(result.originalUrl) && (
             <div style={warningBoxStyle} className="animate-fade-in">

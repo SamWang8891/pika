@@ -42,6 +42,12 @@ body.wide .page.home {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+/* The popup hangs from a toolbar icon and grows leftward, so the result takes
+   the new space on the left and the form stays put under the cursor. */
+body.wide .result-card {
+  order: -1;
+}
+
 /* Long original URLs would push the QR below the fold; two lines, full URL on hover. */
 .result-orig {
   display: -webkit-box;
