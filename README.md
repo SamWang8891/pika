@@ -306,6 +306,8 @@ Local secrets live in `.dev.vars` (copy `.dev.vars.example`). `pnpm check` type-
 The Chrome extension is a separate package: run `pnpm install` and `pnpm build` inside `chrome-extension/`,
 then connect it to the URL `pnpm dev` prints. See [`chrome-extension/README.md`](chrome-extension/README.md).
 
+Every pull request runs CI (`.github/workflows/ci.yml`): `pnpm check` for the web app and for the extension.
+
 ### API Access for Scripts 🤖
 
 The authenticated API endpoints (`change_pass`, `delete_record`, `get_all_records`, `delete_all_records`)

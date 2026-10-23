@@ -287,6 +287,8 @@ pnpm dev                # Vite 開發伺服器，含 worker 與本機 D1
 Chrome 擴充功能是獨立的套件：在 `chrome-extension/` 內執行 `pnpm install` 與 `pnpm build`，
 再將它連到 `pnpm dev` 印出的網址。詳見 [`chrome-extension/README.md`](chrome-extension/README.md)。
 
+每個 pull request 都會執行 CI（`.github/workflows/ci.yml`）：分別對網頁版與擴充功能執行 `pnpm check`。
+
 ### 腳本存取 API 🤖
 
 需要驗證的 API 端點（`change_pass`、`delete_record`、`get_all_records`、`delete_all_records`）
