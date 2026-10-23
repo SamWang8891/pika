@@ -8,6 +8,8 @@
 
 A very simple URL shortener that converts URLs into easy-to-remember English words for improved usability.
 
+Also comes as a [Chrome extension](#chrome-extension-) for shortening the page you're on.
+
 [台灣繁體中文 請按這](README.zh-tw.md)
 
 </div>
@@ -20,6 +22,11 @@ A very simple URL shortener that converts URLs into easy-to-remember English wor
 > FastAPI + nginx + Docker stack ended with
 > [v4.0.0](https://github.com/SamWang8891/pika/releases), which remains available on the
 > release page.
+
+> [!NOTE]
+> **New in v5.1: Chrome extension.** Shorten the current tab from the toolbar popup, or right-click any page
+> or link to copy its short link, against any Pika server you point it at. See
+> [Chrome Extension 🧩](#chrome-extension-).
 
 ---
 
@@ -70,7 +77,8 @@ Found randomly generated URLs too hard to remember? This project offers another 
 - Supports light and dark modes for a better user experience.
 - Fully customizable dictionary for randomized URL shortening.
 - Runs on Cloudflare's free tier — no server to maintain.
-- Chrome extension: shorten the page you're on from the toolbar, against any Pika server you point it at.
+- Chrome extension: shorten the page you're on from the toolbar popup or the right-click menu, against any
+  Pika server you point it at.
 
 ---
 
@@ -294,6 +302,9 @@ pnpm dev                # Vite dev server with the worker and local D1
 
 Local secrets live in `.dev.vars` (copy `.dev.vars.example`). `pnpm check` type-checks and builds;
 `pnpm preview` serves the production build locally.
+
+The Chrome extension is a separate package: run `pnpm install` and `pnpm build` inside `chrome-extension/`,
+then connect it to the URL `pnpm dev` prints. See [`chrome-extension/README.md`](chrome-extension/README.md).
 
 ### API Access for Scripts 🤖
 

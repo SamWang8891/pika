@@ -8,6 +8,8 @@
 
 一個簡單的短網址器，將網址轉換為易於記憶的英文單字，使其容易記憶。.
 
+也提供 [Chrome 擴充功能](#chrome-擴充功能-)，可直接縮短目前瀏覽的頁面。
+
 [Link for English version](README.md)
 
 </div>
@@ -19,6 +21,10 @@
 > `/api/v4` API 以及短網址導向；資料庫使用 D1。自架版的
 > FastAPI + nginx + Docker 架構止於
 > [v4.0.0](https://github.com/SamWang8891/pika/releases)，該版本仍可在發行頁面下載。
+
+> [!NOTE]
+> **v5.1 新功能：Chrome 擴充功能。** 可從工具列彈出視窗縮短目前分頁，或在任何頁面、連結上按右鍵複製短網址，
+> 並可連到任何你指定的 Pika 伺服器。詳見 [Chrome 擴充功能 🧩](#chrome-擴充功能-)。
 
 ---
 
@@ -66,7 +72,7 @@
 - 支援淺色和深色模式。
 - 自定義字典，客製化隨機生成的短網址。
 - 運行在 Cloudflare 的免費方案上——不需要維護伺服器。
-- Chrome 擴充功能：在工具列直接縮短目前瀏覽的頁面，且可連到任何你指定的 Pika 伺服器。
+- Chrome 擴充功能：從工具列彈出視窗或右鍵選單直接縮短目前瀏覽的頁面，且可連到任何你指定的 Pika 伺服器。
 
 ---
 
@@ -277,6 +283,9 @@ pnpm dev                # Vite 開發伺服器，含 worker 與本機 D1
 
 本機密鑰放在 `.dev.vars`（可複製 `.dev.vars.example`）。`pnpm check` 會做型別檢查與建構；
 `pnpm preview` 會在本機以正式版建構執行。
+
+Chrome 擴充功能是獨立的套件：在 `chrome-extension/` 內執行 `pnpm install` 與 `pnpm build`，
+再將它連到 `pnpm dev` 印出的網址。詳見 [`chrome-extension/README.md`](chrome-extension/README.md)。
 
 ### 腳本存取 API 🤖
 
