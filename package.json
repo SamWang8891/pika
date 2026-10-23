@@ -6,7 +6,7 @@
     "build": "vite build",
     "preview": "vite build && vite preview",
     "deploy": "vite build && wrangler deploy",
-    "cf-typegen": "wrangler types",
+    "cf-typegen": "wrangler types --env-file .dev.vars.example",
     "check": "tsc -b && vite build",
     "db:migrate:local": "wrangler d1 migrations apply pika --local",
     "db:migrate": "wrangler d1 migrations apply pika --remote"

@@ -9,6 +9,7 @@ type AppContext = { Bindings: Env }
 const NOT_EXPIRED = "(expires_at IS NULL OR expires_at > datetime('now'))"
 const SESSION_COOKIE = 'session'
 const SESSION_MAX_AGE = 1800 // seconds, same 30-min lifetime as the old Starlette session
+const LOGIN_RETRY_AFTER = 60 // seconds, the LOGIN_LIMITER period in wrangler.jsonc
 const PRESET_MINUTES = new Map<string, number>([['1h', 60], ['12h', 720], ['1d', 1440], ['7d', 10080]])
 const DEFAULT_MINUTES = 10080 // 7d
 const MAX_MINUTES = 100 * 365 * 24 * 60 // ~100 years; larger values overflow the Date or sort below "now"
@@ -172,6 +173,13 @@ api.use('*', async (c, next) => {
 api.get('/status', (c) => reply(c, "It's alive!"))
 
 api.post('/login', async (c) => {
+  // Brute-force guard (see LOGIN_LIMITER in wrangler.jsonc). Cloudflare always sets
+  // CF-Connecting-IP in production; the fallback only matters in local tooling.
+  const ip = c.req.header('CF-Connecting-IP') ?? 'unknown'
+  if (!(await c.env.LOGIN_LIMITER.limit({ key: `login:${ip}` })).success) {
+    c.header('Retry-After', String(LOGIN_RETRY_AFTER))
+    return reply(c, 'Too many login attempts. Try again in a minute.', 429)
+  }
   const { username, password } = await body(c)
   const row = await c.env.DB.prepare('SELECT password FROM login WHERE username = ?1')
     .bind(str(username))
