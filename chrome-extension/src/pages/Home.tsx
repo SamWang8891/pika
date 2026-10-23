@@ -28,7 +28,6 @@ export default function Home() {
   const api = useApi();
   const toast = useToast();
   const urlInputRef = useRef<HTMLInputElement>(null);
-  const resultRef = useRef<HTMLDivElement>(null);
   const qrRef = useRef<HTMLDivElement>(null);
   const qrInstance = useRef<QRCodeStyling | null>(null);
 
@@ -82,9 +81,12 @@ export default function Home() {
     return () => { cancelled = true; };
   }, [result, dark]);
 
-  // The popup is short; bring a fresh result into view instead of leaving it below the fold.
+  // Chrome caps a popup at 800×600, too short for the form and a QR stacked.
+  // Widen it instead and put the result beside the form (see .wide in popup.css);
+  // Chrome resizes the popup to follow the body.
   useEffect(() => {
-    if (result) resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.body.classList.toggle('wide', result !== null);
+    return () => document.body.classList.remove('wide');
   }, [result]);
 
   async function shorten(randomString: boolean) {
@@ -153,7 +155,7 @@ export default function Home() {
   }
 
   return (
-    <div className="page">
+    <div className="page home">
       {/* URL Input Card */}
       <div className="card animate-fade-in-up">
         <form onSubmit={handleShorten}>
@@ -229,7 +231,7 @@ export default function Home() {
 
       {/* Result Card */}
       {result && (
-        <div ref={resultRef} className="card animate-scale-in" style={{ marginTop: 16, textAlign: 'center', scrollMarginTop: 12 }}>
+        <div className="card animate-scale-in" style={{ textAlign: 'center' }}>
           {/* Non-ASCII warning */}
           {/[^\x00-\x7F]/.test(result.originalUrl) && (
             <div style={warningBoxStyle} className="animate-fade-in">
@@ -242,16 +244,16 @@ export default function Home() {
             href={result.originalUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="url-text"
-            style={{ color: 'var(--text-secondary)', display: 'block', marginBottom: 12 }}
+            className="url-text result-orig"
+            title={result.originalUrl}
           >
             {result.originalUrl}
           </a>
 
           {/* Arrow */}
           {result.shortenedUrl && (
-            <div className="animate-bounce-in" style={{ margin: '0 0 12px', color: 'var(--text-muted)' }}>
-              <svg width="28" height="28" viewBox="0 -960 960 960" fill="currentColor">
+            <div className="animate-bounce-in" style={{ margin: '0 0 6px', color: 'var(--text-muted)' }}>
+              <svg width="24" height="24" viewBox="0 -960 960 960" fill="currentColor">
                 <path d="M480-200 240-440l56-56 184 183 184-183 56 56-240 240Zm0-240L240-680l56-56 184 183 184-183 56 56-240 240Z" />
               </svg>
             </div>
@@ -274,16 +276,15 @@ export default function Home() {
                 href={result.shortenedUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="url-big"
-                style={{ minWidth: 0 }}
+                className="url-big result-short"
               >
                 {result.shortenedUrl.slice(0, result.shortenedUrl.lastIndexOf('/') + 1)}
                 <code className="key-chip">{result.shortenedUrl.slice(result.shortenedUrl.lastIndexOf('/') + 1)}</code>
               </a>
-              {result.isRandom && (
-                <span style={{ color: 'var(--text-muted)', fontSize: 13 }}>all lowercase</span>
-              )}
             </div>
+          )}
+          {result.isRandom && (
+            <div style={{ color: 'var(--text-muted)', fontSize: 12, margin: '-6px 0 10px' }}>all lowercase</div>
           )}
 
           {/* QR code */}
@@ -313,8 +314,9 @@ const warningBoxStyle: CSSProperties = {
   background: 'var(--amber-soft)',
   border: '1.5px solid var(--amber)',
   borderRadius: 'var(--radius-sm)',
-  padding: '10px 16px',
-  marginBottom: 16,
+  padding: '6px 12px',
+  marginBottom: 10,
+  fontSize: '0.8rem',
   textAlign: 'center',
 };
 
@@ -323,8 +325,7 @@ const resultRowStyle: CSSProperties = {
   alignItems: 'center',
   justifyContent: 'center',
   gap: 12,
-  flexWrap: 'wrap',
-  marginBottom: 18,
+  marginBottom: 14,
 };
 
 const qrContainerStyle: CSSProperties = {

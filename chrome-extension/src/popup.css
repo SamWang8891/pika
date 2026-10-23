@@ -25,6 +25,45 @@ body {
   padding: 0 14px 16px;
 }
 
+/* With a result, Home widens the popup (Chrome caps height at 600px, width at
+   800px) and shows the result beside the form so the whole QR fits. */
+body.wide {
+  width: 760px;
+}
+
+.page.home {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+body.wide .page.home {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+/* Long original URLs would push the QR below the fold; two lines, full URL on hover. */
+.result-orig {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+/* Copy button stays beside the link; the link may wrap, but never inside the key. */
+.result-short {
+  min-width: 0;
+  font-size: 1.1rem;
+  text-align: left;
+}
+
+.result-short .key-chip {
+  display: inline-block;
+  white-space: nowrap;
+}
+
 /* All five expiry presets on one row instead of wrapping "Never" alone. */
 .pill-group {
   flex-wrap: nowrap;
