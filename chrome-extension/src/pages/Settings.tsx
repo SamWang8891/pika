@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import type { CSSProperties, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { DEFAULT_BACKEND, hostOf, normalizeBackend, requestAccess, useBackend, type HealthResult } from '../backend';
+import { useBackend } from '../backend';
+import { DEFAULT_BACKEND, hostOf, normalizeBackend, requestAccess, type HealthResult } from '../connection';
 import StatusDot from '../components/StatusDot';
 import { useToast } from '../components/Toast';
 

@@ -243,6 +243,8 @@ popup: shorten with a dictionary word, custom keyword, or random string, pick an
 and use the admin panel. On top of that it:
 
 - Pre-fills the URL with the page you're on.
+- Adds a right-click menu that copies without opening the popup: **Copy short link** or **Copy original URL**
+  for the page, and **Copy link as Pika short link** for a link.
 - Works with **any** Pika server. Enter its address in Settings; Chrome asks for access to that site, then
   the extension calls `GET /api/v4/health` and only saves the server if it answers as a Pika backend.
 

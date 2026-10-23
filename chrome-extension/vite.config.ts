@@ -41,8 +41,18 @@ function manifest(backend: string): Plugin {
               default_popup: 'index.html',
               default_icon: { 16: 'icons/icon-16.png', 32: 'icons/icon-32.png' },
             },
-            // activeTab: read the current tab's URL to pre-fill the form when the popup opens.
-            permissions: ['storage', 'activeTab'],
+            background: { service_worker: 'background.js', type: 'module' },
+            permissions: [
+              'storage',
+              // Read the current tab's URL to pre-fill the popup, and script the tab a
+              // context-menu click came from to show its "copied" toast.
+              'activeTab',
+              'contextMenus',
+              'scripting',
+              // The background worker copies through an offscreen document.
+              'offscreen',
+              'clipboardWrite',
+            ],
             ...(backend && { host_permissions: [hostPattern(backend)] }),
             // Any other server is granted on demand when the user connects to it.
             optional_host_permissions: ['https://*/*', 'http://*/*'],
@@ -62,7 +72,15 @@ export default defineConfig(({ mode }) => {
     base: './',
     plugins: [react(), manifest(backend)],
     define: { __PIKA_DEFAULT_BACKEND__: JSON.stringify(backend) },
-    build: { outDir: 'dist', emptyOutDir: true },
+    build: {
+      outDir: 'dist',
+      emptyOutDir: true,
+      rolldownOptions: {
+        input: { popup: 'index.html', offscreen: 'offscreen.html', background: 'src/background.ts' },
+        // The manifest names the service worker, so it needs a stable, unhashed path.
+        output: { entryFileNames: (chunk) => (chunk.name === 'background' ? 'background.js' : 'assets/[name]-[hash].js') },
+      },
+    },
     // style.css and the shared types live in the web app's src/.
     server: { fs: { allow: ['..'] } },
   }

@@ -2,12 +2,16 @@
 
 The Pika web app as a toolbar popup (Manifest V3). It has the same pages and API calls as `src/client`:
 shorten, random string, QR only, expiry, and the admin panel (login, delete, purge, change password,
-logout). There are three differences:
+logout). The differences:
 
 - **The backend is user-chosen.** Settings takes a server address. Connecting asks Chrome for access to
   that site, then calls `GET /api/v4/health` and saves the server only if it answers as a Pika backend.
   The footer dot shows whether the saved server answers each time the popup opens.
 - **The URL field starts with the current tab's URL** (through `activeTab`), selected so a paste replaces it.
+- **Right-click quick copy, no popup needed.** On a page, Pika ▸ **Copy short link** / **Copy original URL**.
+  On a link, **Copy link as Pika short link**. Short links use the popup's defaults (dictionary word,
+  7 days), and the server returns the existing link for a URL it already shortened. A toast in the page
+  confirms the copy, or the toolbar badge does on pages extensions can't script.
 - **Layout fits a 400px popup.** The theme toggle and admin link move to header icons, the admin table
   becomes a stacked list, and "Purge All" confirms inline because `window.confirm` is unreliable in popups.
 
@@ -36,18 +40,25 @@ needs no runtime prompt. Without it, the popup opens on the "Connect to Pika" sc
   `src/shared/types.ts`, so the extension and the server share one version number.
 - The design system is the web app's own `src/client/style.css`, imported as-is. `src/popup.css` only adapts
   it to the popup. Fonts are bundled through `@fontsource` rather than loaded from Google Fonts at runtime.
-- `src/backend.tsx` owns the chosen server: storage, host permissions, the health check, and the footer status.
+- `src/connection.ts` owns the chosen server without React (storage, host permissions, the health check),
+  so the popup and the background worker share it. `src/backend.tsx` is the popup's React side: the provider,
+  the footer status, and `useApi()`.
 - `src/api.ts` mirrors `src/client/api.ts`, bound to the chosen origin and sending `credentials: 'include'`.
   Chrome attaches the backend's session cookie to these requests because the extension holds host
   permission for that site. That is why the admin login works and is shared with the web app in the same
   profile.
+- `src/background.ts` is the service worker. It only wires up the context menu in `src/contextMenu.ts`.
+  Service workers have no clipboard, so copies go through `offscreen.html` (`src/offscreen.ts`).
 
 ### Permissions
 
 | Permission | Why |
 |---|---|
 | `storage` | Remembers the chosen backend. |
-| `activeTab` | Reads the current tab's URL when the popup opens, to pre-fill it. |
+| `activeTab` | Reads the current tab's URL when the popup opens, to pre-fill it. Also lets a context-menu click inject its "copied" toast into that tab. |
+| `contextMenus` | The right-click quick-copy items. |
+| `scripting` | Shows the "copied" toast in the page. |
+| `offscreen`, `clipboardWrite` | Lets the background worker copy to the clipboard through an offscreen document. |
 | `optional_host_permissions` (`http(s)://*/*`) | Requested for one host only, when the user connects to it. A previous backend's access is released on switch. |
 | `host_permissions` | Only present when built with a default backend, and limited to that host. |
 

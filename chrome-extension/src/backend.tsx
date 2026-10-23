@@ -1,20 +1,21 @@
-// Which Pika server the extension talks to. Unlike the web app (always
-// same-origin), the backend is user-chosen: it's stored in chrome.storage, needs
-// a host permission so the popup can fetch it with the admin session cookie,
-// and must pass GET /api/v4/health before it's saved.
-import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
-import type { ApiResponse, HealthData } from '../../src/shared/types'
+// React side of the chosen backend (see connection.ts): loads it, finishes a
+// connect interrupted by the permission prompt, and keeps a live health status
+// for the footer and Settings.
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import type { HealthData } from '../../src/shared/types'
+import { createApi, type Api } from './api'
 import { useToast } from './components/Toast'
+import {
+  BACKEND_KEY,
+  PENDING_KEY,
+  checkHealth,
+  hasAccess,
+  hostOf,
+  loadBackend,
+  releaseAccess,
+  type HealthResult,
+} from './connection'
 
-export const DEFAULT_BACKEND = __PIKA_DEFAULT_BACKEND__
-
-const BACKEND_KEY = 'backend'
-// Set while a connect is waiting on Chrome's permission prompt. On some
-// platforms that prompt closes the popup, so the next open finishes the job.
-const PENDING_KEY = 'pendingBackend'
-const HEALTH_TIMEOUT_MS = 8000
-
-export type HealthResult = { ok: true; info: HealthData } | { ok: false; error: string }
 export type Health = { state: 'checking' } | { state: 'ok'; info: HealthData } | { state: 'error'; error: string }
 
 interface BackendValue {
@@ -24,74 +25,6 @@ interface BackendValue {
 }
 
 const BackendContext = createContext<BackendValue | null>(null)
-
-/** User input → bare origin (Pika serves at the root, so any path is dropped), or null. */
-export function normalizeBackend(input: string): string | null {
-  let raw = input.trim()
-  if (!raw) return null
-  if (!/^[a-z][a-z0-9+.-]*:\/\//i.test(raw)) raw = `https://${raw}`
-  try {
-    const url = new URL(raw)
-    if ((url.protocol !== 'https:' && url.protocol !== 'http:') || !url.hostname) return null
-    return url.origin
-  } catch {
-    return null
-  }
-}
-
-export const hostOf = (origin: string) => new URL(origin).host
-
-// Chrome match patterns carry no port, so this covers every port on the host.
-function hostPattern(origin: string): string {
-  const { protocol, hostname } = new URL(origin)
-  return `${protocol}//${hostname}/*`
-}
-
-/**
- * Ask for access to `origin`. Must be called synchronously from a click/submit
- * handler: chrome.permissions.request needs the user gesture, which an earlier
- * await would lose. Resolves immediately when access is already granted.
- */
-export function requestAccess(origin: string): Promise<boolean> {
-  void chrome.storage.local.set({ [PENDING_KEY]: origin })
-  return chrome.permissions.request({ origins: [hostPattern(origin)] }).then(async (granted) => {
-    if (!granted) await chrome.storage.local.remove(PENDING_KEY)
-    return granted
-  })
-}
-
-// Drop access we no longer need, unless another origin we keep shares the host
-// pattern. The build-time default is a required permission and can't be removed.
-async function releaseAccess(origin: string, keep: string[]): Promise<void> {
-  const pattern = hostPattern(origin)
-  if ([DEFAULT_BACKEND, ...keep].some((o) => o && hostPattern(o) === pattern)) return
-  await chrome.permissions.remove({ origins: [pattern] }).catch(() => {})
-}
-
-export async function checkHealth(origin: string): Promise<HealthResult> {
-  const host = hostOf(origin)
-  let res: Response
-  try {
-    res = await fetch(`${origin}/api/v4/health`, {
-      cache: 'no-store',
-      credentials: 'omit',
-      signal: AbortSignal.timeout(HEALTH_TIMEOUT_MS),
-    })
-  } catch (err) {
-    const timedOut = err instanceof DOMException && err.name === 'TimeoutError'
-    return { ok: false, error: timedOut ? `${host} took too long to answer.` : `Couldn't reach ${host}.` }
-  }
-  const body = (await res.json().catch(() => null)) as ApiResponse<Partial<HealthData> | null> | null
-  const info = body?.data
-  if (info?.service !== 'pika') {
-    return { ok: false, error: `${host} isn't a Pika server (or runs a version without /api/v4/health).` }
-  }
-  if (info.api !== 'v4') return { ok: false, error: `${host} speaks Pika API ${info.api}; this extension needs v4.` }
-  if (!info.configured) {
-    return { ok: false, error: `${host} is a Pika server, but its SECRET_KEY / BEARER_TOKEN aren't set yet.` }
-  }
-  return { ok: true, info: info as HealthData }
-}
 
 export function BackendProvider({ children }: { children: ReactNode }) {
   const [backend, setBackend] = useState<string | null>(null) // null while reading storage
@@ -118,15 +51,14 @@ export function BackendProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let cancelled = false
     ;(async () => {
-      const stored = await chrome.storage.local.get([BACKEND_KEY, PENDING_KEY])
+      const [saved, stored] = await Promise.all([loadBackend(), chrome.storage.local.get(PENDING_KEY)])
       if (cancelled) return
-      const saved = stored[BACKEND_KEY]
-      backendRef.current = typeof saved === 'string' ? saved : DEFAULT_BACKEND
-      setBackend(backendRef.current)
+      backendRef.current = saved
+      setBackend(saved)
 
       const pending = stored[PENDING_KEY]
       if (typeof pending !== 'string') return
-      if (!(await chrome.permissions.contains({ origins: [hostPattern(pending)] }))) {
+      if (!(await hasAccess(pending))) {
         await chrome.storage.local.remove(PENDING_KEY) // the prompt was declined
         return
       }
@@ -146,8 +78,7 @@ export function BackendProvider({ children }: { children: ReactNode }) {
     let cancelled = false
     setHealth({ state: 'checking' })
     ;(async () => {
-      const granted = await chrome.permissions.contains({ origins: [hostPattern(backend)] })
-      const result: HealthResult = granted
+      const result: HealthResult = (await hasAccess(backend))
         ? await checkHealth(backend)
         : { ok: false, error: `Access to ${hostOf(backend)} was removed. Connect again to restore it.` }
       if (!cancelled) setHealth(result.ok ? { state: 'ok', info: result.info } : { state: 'error', error: result.error })
@@ -162,4 +93,9 @@ export function BackendProvider({ children }: { children: ReactNode }) {
 
 export function useBackend(): BackendValue {
   return useContext(BackendContext)!
+}
+
+export function useApi(): Api {
+  const { backend } = useBackend()
+  return useMemo(() => createApi(backend), [backend])
 }

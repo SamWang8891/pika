@@ -2,9 +2,7 @@
 // the web app's src/client/api.ts, but cross-origin: every request sends
 // credentials so the admin session cookie (set by /login) rides along — the
 // extension's host permission for the backend is what lets Chrome do that.
-import { useMemo } from 'react'
 import type { ApiResponse, ExpiresIn, UrlRecord } from '../../src/shared/types'
-import { useBackend } from './backend'
 
 export interface ApiResult<T = null> {
   ok: boolean
@@ -57,8 +55,3 @@ export function createApi(origin: string) {
 }
 
 export type Api = ReturnType<typeof createApi>
-
-export function useApi(): Api {
-  const { backend } = useBackend()
-  return useMemo(() => createApi(backend), [backend])
-}

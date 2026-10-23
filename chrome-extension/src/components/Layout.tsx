@@ -2,7 +2,8 @@ import { useState, type CSSProperties, type MouseEvent, type ReactNode } from 'r
 import { Outlet, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { useTheme } from '../theme';
 import StatusDot from './StatusDot';
-import { hostOf, useBackend, type Health } from '../backend';
+import { useBackend, type Health } from '../backend';
+import { hostOf } from '../connection';
 import { PIKA_VERSION } from '../../../src/shared/types';
 import logoUrl from '../../../public/Pika-full-logo.svg';
 
