@@ -4,7 +4,7 @@
 
 # Pika
 
-<img src="https://img.shields.io/badge/Version-v5.0.0-green">
+<img src="https://img.shields.io/badge/Version-v5.1.0-green">
 
 A very simple URL shortener that converts URLs into easy-to-remember English words for improved usability.
 
@@ -307,7 +307,7 @@ changing the password invalidates all existing sessions.
 (like the Chrome extension) can confirm it's really Pika:
 
 ```json
-{"message":"ok","data":{"service":"pika","version":"5.0.0","api":"v4","configured":true}}
+{"message":"ok","data":{"service":"pika","version":"5.1.0","api":"v4","configured":true}}
 ```
 
 `configured` stays `false` until both `SECRET_KEY` and `BEARER_TOKEN` are set; unlike the rest of

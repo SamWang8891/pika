@@ -4,7 +4,7 @@
 
 # Pika
 
-<img src="https://img.shields.io/badge/Version-v5.0.0-green">
+<img src="https://img.shields.io/badge/Version-v5.1.0-green">
 
 一個簡單的短網址器，將網址轉換為易於記憶的英文單字，使其容易記憶。.
 
@@ -288,7 +288,7 @@ Bearer token 在 `change_pass` 上也會跳過目前密碼的檢查。
 擴充功能）確認對方確實是 Pika：
 
 ```json
-{"message":"ok","data":{"service":"pika","version":"5.0.0","api":"v4","configured":true}}
+{"message":"ok","data":{"service":"pika","version":"5.1.0","api":"v4","configured":true}}
 ```
 
 在 `SECRET_KEY` 與 `BEARER_TOKEN` 都設定好之前，`configured` 會是 `false`；與 `/api/v4` 的其他端點不同，
