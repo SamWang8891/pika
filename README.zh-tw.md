@@ -252,6 +252,16 @@ pnpm dev                # Vite 開發伺服器，含 worker 與本機 D1
 可改用 `Authorization: Bearer <BEARER_TOKEN>` 標頭取代 session cookie，腳本不需登入。
 Bearer token 在 `change_pass` 上也會跳過目前密碼的檢查。
 
+`GET /api/v4/health` 不需驗證，用來表明伺服器身分，讓連到使用者自填位址的客戶端（例如 Chrome
+擴充功能）確認對方確實是 Pika：
+
+```json
+{"message":"ok","data":{"service":"pika","version":"5.0.0","api":"v4","configured":true}}
+```
+
+在 `SECRET_KEY` 與 `BEARER_TOKEN` 都設定好之前，`configured` 會是 `false`；與 `/api/v4` 的其他端點不同，
+`health` 在這種狀態下仍會正常回應，而不是回傳 `500`。
+
 ---
 
 ## 鳴謝 🙏

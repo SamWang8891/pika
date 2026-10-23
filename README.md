@@ -269,6 +269,16 @@ in. The bearer token also skips the current-password check on `change_pass`; a *
 `change_pass` must include the correct `current_pass`. New passwords must be at least 8 characters, and
 changing the password invalidates all existing sessions.
 
+`GET /api/v4/health` needs no auth and identifies the server, so clients pointed at a user-supplied address
+(like the Chrome extension) can confirm it's really Pika:
+
+```json
+{"message":"ok","data":{"service":"pika","version":"5.0.0","api":"v4","configured":true}}
+```
+
+`configured` stays `false` until both `SECRET_KEY` and `BEARER_TOKEN` are set; unlike the rest of
+`/api/v4`, `health` still answers in that state instead of returning `500`.
+
 ---
 
 ## Special Thanks 🙏
