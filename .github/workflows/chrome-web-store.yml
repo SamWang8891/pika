@@ -1,0 +1,69 @@
+# Builds the Chrome extension and submits it to the Chrome Web Store whenever a
+# GitHub release is published, or by hand from the Actions tab.
+#
+# Stays inactive until it's configured (Settings → Secrets and variables → Actions):
+#   secret    CWS_SERVICE_ACCOUNT_KEY  service account JSON key (Chrome Web Store API enabled,
+#                                      its email added under Account in the Developer Dashboard)
+#   variable  CWS_PUBLISHER_ID         Developer Dashboard → Publisher → Settings
+#   variable  CWS_EXTENSION_ID         the store item's ID (create the item by hand first)
+#   variable  PIKA_DEFAULT_BACKEND     optional: server baked into the build
+name: Publish Chrome extension
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Never run two submissions at once; a second one would race the first upload.
+concurrency:
+  group: chrome-web-store
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Upload and submit for review
+    if: vars.CWS_EXTENSION_ID != ''
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: chrome-extension
+    steps:
+      - uses: actions/checkout@v7
+
+      # The store rejects a version it already has, and the manifest version comes
+      # from PIKA_VERSION, so a release tag that doesn't match it can't go out.
+      - name: Check the release tag matches PIKA_VERSION
+        if: github.event_name == 'release'
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          version=$(node -p "require('fs').readFileSync('../src/shared/types.ts', 'utf8').match(/PIKA_VERSION = '([^']+)'/)[1]")
+          if [ "$TAG" != "v$version" ]; then
+            echo "::error::Release tag $TAG doesn't match PIKA_VERSION $version. Bump the version and tag v$version."
+            exit 1
+          fi
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 12
+          cache: true
+          cache_dependency_path: chrome-extension/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build pika-extension.zip
+        run: pnpm zip
+        env:
+          VITE_PIKA_DEFAULT_BACKEND: ${{ vars.PIKA_DEFAULT_BACKEND }}
+
+      - name: Upload to the Chrome Web Store and submit for review
+        run: node scripts/cws-publish.mjs pika-extension.zip
+        env:
+          CWS_SERVICE_ACCOUNT_KEY: ${{ secrets.CWS_SERVICE_ACCOUNT_KEY }}
+          CWS_PUBLISHER_ID: ${{ vars.CWS_PUBLISHER_ID }}
+          CWS_EXTENSION_ID: ${{ vars.CWS_EXTENSION_ID }}

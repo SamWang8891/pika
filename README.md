@@ -274,6 +274,10 @@ connect step. `pnpm zip` packs `dist/` for the Chrome Web Store.
 Admin login in the extension uses the server's normal session cookie, so it shares the login with the web
 app in the same Chrome profile.
 
+The web app serves a privacy policy at `/privacy-policy` and terms of use at `/terms-of-use`, linked from
+its footer. Use `https://<your-domain>/privacy-policy` as the store listing's privacy policy URL. The text describes the official
+Pika server, so self-hosters should edit `src/client/pages/Privacy.tsx` and `Terms.tsx`.
+
 ---
 
 ## Development 🛠

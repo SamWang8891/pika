@@ -255,6 +255,9 @@ pnpm build          # 輸出至 chrome-extension/dist
 
 擴充功能的管理員登入使用伺服器原本的 session cookie，因此在同一個 Chrome 設定檔中與網頁版共用登入狀態。
 
+網頁版在 `/privacy-policy` 提供隱私權政策、在 `/terms-of-use` 提供使用條款，頁尾有連結。上架時隱私權政策網址可填
+`https://<你的網域>/privacy-policy`。內容描述的是官方 Pika 伺服器，自架者請修改 `src/client/pages/Privacy.tsx` 與 `Terms.tsx`。
+
 ---
 
 ## 開發 🛠
