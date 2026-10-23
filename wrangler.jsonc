@@ -32,6 +32,16 @@
       "migrations_dir": "migrations"
     }
   ],
+  // Admin login attempts per client IP. Approximate and counted per Cloudflare
+  // location; plenty to make guessing the admin password impractical. The
+  // namespace_id only has to be unique within the Cloudflare account.
+  "ratelimits": [
+    {
+      "name": "LOGIN_LIMITER",
+      "namespace_id": "51001",
+      "simple": { "limit": 5, "period": 60 }
+    }
+  ],
   "observability": {
     "enabled": true
   }
