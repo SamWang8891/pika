@@ -548,6 +548,47 @@ a:hover {
   color: var(--danger);
 }
 
+/* ── Policy pages (/privacy, /terms) ── */
+.policy h3 {
+  margin: 26px 0 10px;
+}
+
+.policy p,
+.policy li {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.65;
+}
+
+.policy p + p {
+  margin-top: 10px;
+}
+
+.policy ul {
+  padding-left: 1.2em;
+  margin: 8px 0;
+}
+
+.policy li + li {
+  margin-top: 6px;
+}
+
+.policy strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.policy a {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.policy .policy-updated {
+  margin: 6px 0 18px;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
 /* ── Warning text ── */
 .warning-text {
   color: var(--amber);

@@ -39,6 +39,7 @@ needs no runtime prompt. Without it, the popup opens on the "Connect to Pika" sc
 **First release (by hand):**
 - Build with `pnpm zip`, then create the item in the [Developer Dashboard](https://chrome.google.com/webstore/devconsole) and upload `pika-extension.zip`.
 - Fill in the store listing, privacy answers and distribution there; the API can only update an existing item.
+- For the privacy policy URL, use your server's `/privacy` page. The terms of use are at `/terms`.
 
 **Later releases are automated** by `.github/workflows/chrome-web-store.yml`:
 - Publishing a GitHub release tagged `v<PIKA_VERSION>` builds the zip, uploads it, and submits it for review. You can also run it by hand from the Actions tab.

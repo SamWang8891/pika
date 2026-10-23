@@ -5,7 +5,9 @@ import ChangePassword from './pages/ChangePassword'
 import Home from './pages/Home'
 import Login from './pages/Login'
 import Logout from './pages/Logout'
+import Privacy from './pages/Privacy'
 import Redirect from './pages/Redirect'
+import Terms from './pages/Terms'
 
 export default function App() {
   return (
@@ -16,6 +18,8 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/logout" element={<Logout />} />
         <Route path="/change_pass" element={<ChangePassword />} />
+        <Route path="/privacy" element={<Privacy />} />
+        <Route path="/terms" element={<Terms />} />
         <Route path="/:shortKey" element={<Redirect />} />
         {/* Multi-segment unknown paths don't match /:shortKey — send them home
             instead of rendering a blank page. */}

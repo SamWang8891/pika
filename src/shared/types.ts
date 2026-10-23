@@ -13,7 +13,7 @@ export interface UrlRecord {
 export type ExpiresIn = '1h' | '12h' | '1d' | '7d' | 'never'
 
 export const KEYWORD_RE = /^[A-Za-z0-9]+$/
-export const FORBIDDEN_KEYWORDS = new Set(['login', 'admin', 'logout', 'api', 'index', 'index.html', 'change_pass'])
+export const FORBIDDEN_KEYWORDS = new Set(['login', 'admin', 'logout', 'api', 'index', 'index.html', 'change_pass', 'privacy', 'terms'])
 
 export const PIKA_VERSION = '5.1.0'
 
