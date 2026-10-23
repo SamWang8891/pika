@@ -5,7 +5,7 @@ import { useTheme } from '../theme';
 import { useToast } from '../components/Toast';
 import ExpirySelector from '../components/ExpirySelector';
 import { useApi, useBackend } from '../backend';
-import { hostOf } from '../connection';
+import { hostOf } from '../origin';
 import type { ExpiresIn } from '../../../src/shared/types';
 import qrIconUrl from '../assets/icon-QR.png';
 

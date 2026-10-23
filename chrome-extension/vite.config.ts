@@ -1,20 +1,20 @@
 import react from '@vitejs/plugin-react'
+import { fileURLToPath } from 'node:url'
 import { defineConfig, loadEnv, type Plugin } from 'vite'
 import { PIKA_VERSION } from '../src/shared/types.ts'
+import { hostPattern, normalizeBackend } from './src/origin.ts'
+
+// Anchor everything to this directory, so a build started from elsewhere (e.g.
+// `vite build --config chrome-extension/vite.config.ts`) still finds index.html and .env.
+const root = fileURLToPath(new URL('.', import.meta.url))
 
 // Normalize the optional build-time default backend to a bare origin, and fail
 // the build (not the user) if it's malformed.
 function defaultBackend(raw: string | undefined): string {
   if (!raw) return ''
-  const url = new URL(raw)
-  if (url.protocol !== 'https:' && url.protocol !== 'http:') throw new Error(`VITE_PIKA_DEFAULT_BACKEND must be http(s): ${raw}`)
-  return url.origin
-}
-
-// Chrome match patterns carry no port, so this covers every port on the host.
-const hostPattern = (origin: string) => {
-  const { protocol, hostname } = new URL(origin)
-  return `${protocol}//${hostname}/*`
+  const origin = normalizeBackend(raw)
+  if (!origin) throw new Error(`VITE_PIKA_DEFAULT_BACKEND must be an http(s) URL: ${raw}`)
+  return origin
 }
 
 // Emit manifest.json from here rather than keeping a static file, so the
@@ -66,8 +66,9 @@ function manifest(backend: string): Plugin {
 }
 
 export default defineConfig(({ mode }) => {
-  const backend = defaultBackend(loadEnv(mode, process.cwd(), 'VITE_').VITE_PIKA_DEFAULT_BACKEND)
+  const backend = defaultBackend(loadEnv(mode, root, 'VITE_').VITE_PIKA_DEFAULT_BACKEND)
   return {
+    root,
     // Relative asset URLs: the popup is served from chrome-extension://<id>/.
     base: './',
     plugins: [react(), manifest(backend)],
@@ -76,12 +77,16 @@ export default defineConfig(({ mode }) => {
       outDir: 'dist',
       emptyOutDir: true,
       rolldownOptions: {
-        input: { popup: 'index.html', offscreen: 'offscreen.html', background: 'src/background.ts' },
+        input: {
+          popup: `${root}index.html`,
+          offscreen: `${root}offscreen.html`,
+          background: `${root}src/background.ts`,
+        },
         // The manifest names the service worker, so it needs a stable, unhashed path.
         output: { entryFileNames: (chunk) => (chunk.name === 'background' ? 'background.js' : 'assets/[name]-[hash].js') },
       },
     },
     // style.css and the shared types live in the web app's src/.
-    server: { fs: { allow: ['..'] } },
+    server: { fs: { allow: [`${root}..`] } },
   }
 })

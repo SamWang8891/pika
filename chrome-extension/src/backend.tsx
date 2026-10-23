@@ -5,16 +5,8 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import type { HealthData } from '../../src/shared/types'
 import { createApi, type Api } from './api'
 import { useToast } from './components/Toast'
-import {
-  BACKEND_KEY,
-  PENDING_KEY,
-  checkHealth,
-  hasAccess,
-  hostOf,
-  loadBackend,
-  releaseAccess,
-  type HealthResult,
-} from './connection'
+import { BACKEND_KEY, PENDING_KEY, checkHealth, hasAccess, loadBackend, releaseAccess, type HealthResult } from './connection'
+import { hostOf } from './origin'
 
 export type Health = { state: 'checking' } | { state: 'ok'; info: HealthData } | { state: 'error'; error: string }
 
@@ -30,6 +22,8 @@ export function BackendProvider({ children }: { children: ReactNode }) {
   const [backend, setBackend] = useState<string | null>(null) // null while reading storage
   const [health, setHealth] = useState<Health>({ state: 'checking' })
   const backendRef = useRef('')
+  // Origin connect() just health-checked, so the effect below doesn't check it again.
+  const freshRef = useRef<string | null>(null)
   const toast = useToast()
 
   const connect = useCallback(async (origin: string): Promise<HealthResult> => {
@@ -42,8 +36,9 @@ export function BackendProvider({ children }: { children: ReactNode }) {
     }
     await chrome.storage.local.set({ [BACKEND_KEY]: origin })
     backendRef.current = origin
+    freshRef.current = origin
     setBackend(origin)
-    setHealth({ state: 'ok', info: result.info }) // reconnecting the same origin won't re-run the check below
+    setHealth({ state: 'ok', info: result.info })
     if (prev && prev !== origin) await releaseAccess(prev, [origin])
     return result
   }, [])
@@ -75,6 +70,10 @@ export function BackendProvider({ children }: { children: ReactNode }) {
   // whether the server is reachable before the user tries anything.
   useEffect(() => {
     if (!backend) return
+    if (freshRef.current === backend) {
+      freshRef.current = null
+      return
+    }
     let cancelled = false
     setHealth({ state: 'checking' })
     ;(async () => {

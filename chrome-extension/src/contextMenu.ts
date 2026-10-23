@@ -3,7 +3,8 @@
 // the popup's defaults (a dictionary word, 7 days); the server hands back the
 // existing link for a URL it has already shortened, so repeats don't pile up.
 import { createApi } from './api'
-import { hasAccess, hostOf, loadBackend } from './connection'
+import { hasAccess, loadBackend } from './connection'
+import { hostOf } from './origin'
 
 const WEB_URLS = ['http://*/*', 'https://*/*']
 
@@ -54,22 +55,22 @@ export async function runMenuItem(id: string, info: { pageUrl?: string; linkUrl?
 
 // ── clipboard ───────────────────────────────────────────────────────────────
 
-let creatingOffscreen: Promise<void> | null = null
+let ensuringOffscreen: Promise<void> | null = null
 
 // A service worker has no clipboard, so an offscreen document does the copy.
-// It stays open between copies; hasDocument() covers a worker restart.
+// It stays open between copies; hasDocument() covers a worker restart. The check
+// and the create share one promise so overlapping copies can't both create it.
 async function copyText(text: string): Promise<boolean> {
   try {
-    if (!(await chrome.offscreen.hasDocument())) {
-      creatingOffscreen ??= chrome.offscreen
-        .createDocument({
-          url: 'offscreen.html',
-          reasons: [chrome.offscreen.Reason.CLIPBOARD],
-          justification: 'Copy the link picked from the Pika context menu',
-        })
-        .finally(() => { creatingOffscreen = null })
-      await creatingOffscreen
-    }
+    ensuringOffscreen ??= (async () => {
+      if (await chrome.offscreen.hasDocument()) return
+      await chrome.offscreen.createDocument({
+        url: 'offscreen.html',
+        reasons: [chrome.offscreen.Reason.CLIPBOARD],
+        justification: 'Copy the link picked from the Pika context menu',
+      })
+    })().finally(() => { ensuringOffscreen = null })
+    await ensuringOffscreen
     return (await chrome.runtime.sendMessage({ target: 'offscreen', type: 'copy', text })) === true
   } catch {
     return false
@@ -77,6 +78,8 @@ async function copyText(text: string): Promise<boolean> {
 }
 
 // ── feedback ────────────────────────────────────────────────────────────────
+
+let badgeTimer: ReturnType<typeof setTimeout> | undefined
 
 async function showFeedback(tabId: number | undefined, ok: boolean, title: string, detail: string): Promise<void> {
   try {
@@ -87,7 +90,8 @@ async function showFeedback(tabId: number | undefined, ok: boolean, title: strin
     // Pages Chrome won't let extensions script (the Web Store, PDFs): flash the toolbar badge instead.
     await chrome.action.setBadgeBackgroundColor({ color: ok ? '#3D8B5F' : '#D94040' })
     await chrome.action.setBadgeText({ text: ok ? '✓' : '!' })
-    setTimeout(() => void chrome.action.setBadgeText({ text: '' }), 3000)
+    clearTimeout(badgeTimer) // an earlier copy's timer mustn't clear this badge early
+    badgeTimer = setTimeout(() => void chrome.action.setBadgeText({ text: '' }), 3000)
   }
 }
 

@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useBackend } from '../backend';
-import { DEFAULT_BACKEND, hostOf, normalizeBackend, requestAccess, type HealthResult } from '../connection';
+import { DEFAULT_BACKEND, requestAccess, type HealthResult } from '../connection';
+import { hostOf, normalizeBackend } from '../origin';
 import StatusDot from '../components/StatusDot';
 import { useToast } from '../components/Toast';
 
@@ -13,6 +14,16 @@ export default function Settings() {
   const navigate = useNavigate();
   const toast = useToast();
   const firstRun = !backend;
+  const wasFirstRun = useRef(firstRun);
+
+  // A connect can also finish outside this form (BackendProvider resuming one the
+  // permission prompt interrupted), so follow the backend instead of seeding the
+  // input once, and leave the first-run screen whichever way the backend arrived.
+  useEffect(() => {
+    if (!backend) return;
+    setInput(backend);
+    if (wasFirstRun.current) navigate('/');
+  }, [backend, navigate]);
 
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -31,9 +42,8 @@ export default function Settings() {
           toast.error(res.error);
           return;
         }
-        setInput(origin);
+        setInput(origin); // normalized; reconnecting the same origin doesn't re-run the effect
         toast.success(`Connected to ${hostOf(origin)}`);
-        if (firstRun) navigate('/');
       })
       .catch(() => toast.error('Something went wrong. Please try again.'))
       .finally(() => setBusy(false));

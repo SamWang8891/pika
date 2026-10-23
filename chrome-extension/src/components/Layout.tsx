@@ -3,7 +3,7 @@ import { Outlet, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { useTheme } from '../theme';
 import StatusDot from './StatusDot';
 import { useBackend, type Health } from '../backend';
-import { hostOf } from '../connection';
+import { hostOf } from '../origin';
 import { PIKA_VERSION } from '../../../src/shared/types';
 import logoUrl from '../../../public/Pika-full-logo.svg';
 

@@ -27,6 +27,9 @@ export default function Admin() {
       }
       if (res.ok) {
         setRecords(res.data.data.records);
+      } else {
+        // Don't let a 5xx pass for an empty list ("No records yet.").
+        toast.error(res.data?.message || 'Failed to load records');
       }
     } catch {
       toast.error('Failed to load records');
