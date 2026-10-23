@@ -230,10 +230,15 @@ pnpm wrangler d1 execute pika --remote --command "UPDATE login SET password='' W
 
 ### Rate Limiting 🕒
 
-The worker itself does not rate-limit (the old nginx 10 r/s rule is gone). If your instance is
-public, add a [Cloudflare WAF rate limiting rule](https://developers.cloudflare.com/waf/rate-limiting-rules/)
-on your zone — e.g. 5 requests/minute per IP on `POST /api/v4/login` to throttle brute-force, plus a
-looser cap on `/api/v4/create_record` if you leave shortening unauthenticated.
+Admin login is rate-limited by the worker itself: **5 attempts per minute per IP**. Further attempts get
+`429 Too Many Requests` with `Retry-After: 60`. It uses Cloudflare's
+[Workers rate-limiting binding](https://developers.cloudflare.com/workers/runtime-apis/bindings/rate-limit/)
+(`LOGIN_LIMITER` in `wrangler.jsonc`), which needs no setup. The count is approximate and kept per Cloudflare
+location, which is plenty to make guessing the password impractical.
+
+Nothing else is rate-limited. If your instance is public and shortening is open to anyone, consider a
+[Cloudflare WAF rate limiting rule](https://developers.cloudflare.com/waf/rate-limiting-rules/) on
+`/api/v4/create_record`.
 
 ### Customizing the Dictionary 📚
 
@@ -273,6 +278,10 @@ connect step. `pnpm zip` packs `dist/` for the Chrome Web Store.
 
 Admin login in the extension uses the server's normal session cookie, so it shares the login with the web
 app in the same Chrome profile.
+
+The web app serves a privacy policy at `/privacy-policy` and terms of use at `/terms-of-use`, linked from
+its footer. Use `https://<your-domain>/privacy-policy` as the store listing's privacy policy URL. The text describes the official
+Pika server, so self-hosters should edit `src/client/pages/Privacy.tsx` and `Terms.tsx`.
 
 ---
 

@@ -214,9 +214,14 @@ pnpm wrangler d1 execute pika --remote --command "UPDATE login SET password='pbk
 
 ### 速率限制 🕒
 
-worker 本身沒有速率限制（舊版 nginx 的每秒 10 次規則已移除）。若有需要，可在你的 zone 上新增
-[Cloudflare WAF 速率限制規則](https://developers.cloudflare.com/waf/rate-limiting-rules/)——它會在
-worker 之前生效，且可依路徑設定。
+管理員登入由 worker 本身限制速率：**每個 IP 每分鐘 5 次**，超過的請求會收到 `429 Too Many Requests`
+與 `Retry-After: 60`。這使用 Cloudflare 的
+[Workers 速率限制 binding](https://developers.cloudflare.com/workers/runtime-apis/bindings/rate-limit/)
+（`wrangler.jsonc` 中的 `LOGIN_LIMITER`），不需額外設定。計數是近似值且依 Cloudflare 機房分開計算，
+但已足以讓猜測密碼變得不切實際。
+
+其他端點沒有速率限制。若你的伺服器公開且任何人都能縮短網址，可考慮在 `/api/v4/create_record` 加上
+[Cloudflare WAF 速率限制規則](https://developers.cloudflare.com/waf/rate-limiting-rules/)。
 
 ### 客製化字典 📚
 
@@ -254,6 +259,9 @@ pnpm build          # 輸出至 chrome-extension/dist
 `pnpm zip` 會將 `dist/` 打包，供上架 Chrome Web Store 使用。
 
 擴充功能的管理員登入使用伺服器原本的 session cookie，因此在同一個 Chrome 設定檔中與網頁版共用登入狀態。
+
+網頁版在 `/privacy-policy` 提供隱私權政策、在 `/terms-of-use` 提供使用條款，頁尾有連結。上架時隱私權政策網址可填
+`https://<你的網域>/privacy-policy`。內容描述的是官方 Pika 伺服器，自架者請修改 `src/client/pages/Privacy.tsx` 與 `Terms.tsx`。
 
 ---
 

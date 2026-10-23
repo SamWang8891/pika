@@ -5,7 +5,9 @@ import ChangePassword from './pages/ChangePassword'
 import Home from './pages/Home'
 import Login from './pages/Login'
 import Logout from './pages/Logout'
+import Privacy from './pages/Privacy'
 import Redirect from './pages/Redirect'
+import Terms from './pages/Terms'
 
 export default function App() {
   return (
@@ -16,6 +18,9 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/logout" element={<Logout />} />
         <Route path="/change_pass" element={<ChangePassword />} />
+        {/* Hyphenated so they can never collide with a short-link keyword ([A-Za-z0-9]+). */}
+        <Route path="/privacy-policy" element={<Privacy />} />
+        <Route path="/terms-of-use" element={<Terms />} />
         <Route path="/:shortKey" element={<Redirect />} />
         {/* Multi-segment unknown paths don't match /:shortKey — send them home
             instead of rendering a blank page. */}

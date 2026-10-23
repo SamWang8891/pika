@@ -34,6 +34,29 @@ extension to the URL it prints.
 server becomes the initial backend, and `vite.config.ts` adds it to the manifest's `host_permissions`, so it
 needs no runtime prompt. Without it, the popup opens on the "Connect to Pika" screen until a server is set.
 
+## Publishing to the Chrome Web Store
+
+**First release (by hand):**
+- Build with `pnpm zip`, then create the item in the [Developer Dashboard](https://chrome.google.com/webstore/devconsole) and upload `pika-extension.zip`.
+- Fill in the store listing, privacy answers and distribution there; the API can only update an existing item.
+- For the privacy policy URL, use your server's `/privacy-policy` page. The terms of use are at `/terms-of-use`.
+
+**Later releases are automated** by `.github/workflows/chrome-web-store.yml`:
+- Publishing a GitHub release tagged `v<PIKA_VERSION>` builds the zip, uploads it, and submits it for review. You can also run it by hand from the Actions tab.
+- A release whose tag doesn't match `PIKA_VERSION` fails before uploading, because the store rejects versions it already has.
+- The upload and submit steps are `scripts/cws-publish.mjs` (Chrome Web Store API v2), which needs no dependencies.
+
+One-time setup:
+
+1. In Google Cloud, enable the **Chrome Web Store API**, create a service account, and download a JSON key for it.
+2. In the Developer Dashboard, go to **Account** and add the service account's email.
+3. In the GitHub repo, go to **Settings → Secrets and variables → Actions** and add:
+   - the secret `CWS_SERVICE_ACCOUNT_KEY`, containing the whole JSON key file
+   - the variables `CWS_PUBLISHER_ID` (Dashboard → Publisher → Settings) and `CWS_EXTENSION_ID` (the item's ID)
+   - optionally the variable `PIKA_DEFAULT_BACKEND`, the server baked into store builds
+
+The workflow is skipped until `CWS_EXTENSION_ID` is set. Each submission still goes through Google's review before it goes live. If you change the listing's visibility in the dashboard, publish once by hand before the API can publish again.
+
 ## How it fits together
 
 - `vite.config.ts` writes `manifest.json` at build time. The version comes from `PIKA_VERSION` in
